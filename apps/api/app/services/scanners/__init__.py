@@ -1,0 +1,1 @@
+"""Normalized scanner adapter layer."""
