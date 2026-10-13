@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: neoguardian_test
+          POSTGRES_USER: neoguardian
+          POSTGRES_PASSWORD: neoguardian-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U neoguardian -d neoguardian_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: development
+      APP_SECRET_KEY: ci-only-secret-key-with-more-than-32-characters
+      DATABASE_URL: postgresql+asyncpg://neoguardian:neoguardian-ci-only@localhost:5432/neoguardian_test
+      BOOTSTRAP_ADMIN_NAME: Administrador CI
+      BOOTSTRAP_ADMIN_EMAIL: admin@neoguardian.com
+      BOOTSTRAP_ADMIN_PASSWORD: ci-only-strong-password-2026!
+      BOOTSTRAP_CLIENT_NAME: Ambiente CI
+      BOOTSTRAP_CLIENT_SLUG: ci
+      RUN_DATABASE_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+      - name: Install API dependencies
+        run: python -m pip install -e "apps/api[dev]"
+      - name: Apply database migrations
+        env:
+          PGPASSWORD: neoguardian-ci-only
+        run: |
+          for migration in database/migrations/*.sql; do
+            psql -h localhost -U neoguardian -d neoguardian_test -v ON_ERROR_STOP=1 -f "$migration"
+          done
+      - name: Lint API
+        run: ruff check apps/api
+      - name: Test API and database flow
+        run: pytest apps/api
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install web dependencies
+        run: npm ci
+      - name: Lint web
+        run: npm run lint
+      - name: Build web
+        run: npm run build
