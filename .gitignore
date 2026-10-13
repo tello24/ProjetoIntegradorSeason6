@@ -1,0 +1,44 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Sensitive scanner exports
+*.nessus
+*.nessus.gz
+uploads/
+
+# JavaScript
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Coverage and builds
+coverage/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+
+# Temporary files
+tmp/
+*.tmp
+*.log
