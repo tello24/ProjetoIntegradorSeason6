@@ -1,0 +1,350 @@
+.roleGrid {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.roleCard {
+  --role-tone: var(--text-dim);
+  display: grid;
+  min-height: 132px;
+  align-content: start;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--role-tone);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--role-tone) 9%, transparent), transparent 46%),
+    var(--surface-panel);
+}
+
+.roleCard > span,
+.formHeading span,
+.panelHeading span,
+.field > span,
+.roleSelect > span {
+  color: var(--role-tone);
+  font-family: var(--font-sans);
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roleCard strong {
+  color: var(--text-strong);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.roleCard p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.role_administrador { --role-tone: var(--brand-orange-light); }
+.role_gestor { --role-tone: var(--yellow); }
+.role_analista { --role-tone: var(--green); }
+.role_visualizador { --role-tone: var(--text-dim); }
+
+.createPanel,
+.userPanel {
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-panel);
+}
+
+.createPanel {
+  padding: 18px;
+  border-color: rgba(255, 109, 2, 0.3);
+  background:
+    linear-gradient(120deg, rgba(255, 109, 2, 0.08), transparent 42%),
+    var(--surface-panel);
+}
+
+.formHeading,
+.panelHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.formHeading > div,
+.panelHeading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.formHeading span,
+.panelHeading span,
+.field > span,
+.roleSelect > span {
+  --role-tone: var(--text-dim);
+}
+
+.formHeading strong,
+.panelHeading strong {
+  color: var(--text-strong);
+  font-size: 12px;
+}
+
+.formHeading small,
+.panelHeading small {
+  color: var(--text-dim);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.formGrid {
+  display: grid;
+  gap: 10px;
+  margin-top: 17px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.field,
+.roleSelect {
+  display: grid;
+  gap: 6px;
+}
+
+.field input,
+.field select,
+.roleSelect select {
+  width: 100%;
+  height: 41px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  outline-color: var(--cyan);
+  background: var(--surface-deep);
+  color: var(--text-soft);
+  font-size: 9px;
+}
+
+.field input::placeholder {
+  color: var(--text-dim);
+}
+
+.field select:disabled,
+.roleSelect select:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.success {
+  margin: 0 0 14px;
+  padding: 11px 13px;
+  border: 1px solid rgba(24, 215, 123, 0.28);
+  border-radius: 5px;
+  background: rgba(24, 215, 123, 0.07);
+  color: var(--green);
+  font-size: 9px;
+}
+
+.panelHeading {
+  min-height: 66px;
+  padding: 13px 17px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft-panel);
+}
+
+.userList {
+  display: grid;
+}
+
+.userRow {
+  display: grid;
+  min-height: 78px;
+  align-items: center;
+  gap: 14px;
+  grid-template-columns: 38px minmax(180px, 1.4fr) minmax(150px, 0.8fr) minmax(110px, 0.6fr) 86px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.userRow:last-child {
+  border-bottom: 0;
+}
+
+.userInactive {
+  background: var(--surface-soft-panel);
+  opacity: 0.72;
+}
+
+.avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 109, 2, 0.34);
+  border-radius: 50%;
+  background: rgba(255, 109, 2, 0.09);
+  color: var(--brand-orange-light);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 750;
+  place-items: center;
+}
+
+.identity {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.identity strong {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity strong small {
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: rgba(255, 109, 2, 0.1);
+  color: var(--brand-orange-light);
+  font-size: 6px;
+}
+
+.identity > span {
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accessState {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+.activeBadge,
+.inactiveBadge {
+  display: inline-flex;
+  min-height: 23px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 7px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.activeBadge { color: var(--green); }
+.inactiveBadge { color: var(--text-dim); }
+
+.accessState small {
+  color: var(--text-dim);
+  font-size: 7px;
+}
+
+.deactivateButton,
+.activateButton {
+  min-height: 31px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 64, 36, 0.28);
+  border-radius: 5px;
+  background: rgba(255, 64, 36, 0.06);
+  color: var(--red);
+  cursor: pointer;
+  font-size: 8px;
+}
+
+.activateButton {
+  border-color: rgba(24, 215, 123, 0.28);
+  background: rgba(24, 215, 123, 0.06);
+  color: var(--green);
+}
+
+.deactivateButton:disabled,
+.activateButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+@media (max-width: 1150px) {
+  .roleGrid,
+  .formGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .userRow {
+    grid-template-columns: 38px minmax(180px, 1fr) minmax(150px, 0.8fr) 86px;
+  }
+
+  .accessState {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .formHeading,
+  .panelHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .userRow {
+    grid-template-columns: 38px minmax(0, 1fr) 80px;
+  }
+
+  .roleSelect {
+    grid-column: 2;
+  }
+
+  .deactivateButton,
+  .activateButton {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .roleGrid,
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+
+  .userRow {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .roleSelect,
+  .deactivateButton,
+  .activateButton {
+    grid-column: 2;
+    grid-row: auto;
+  }
+}

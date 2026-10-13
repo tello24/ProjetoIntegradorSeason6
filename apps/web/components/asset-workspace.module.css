@@ -1,0 +1,305 @@
+.contextSignals {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.contextSignal {
+  --signal-tone: var(--cyan);
+  display: grid;
+  min-height: 80px;
+  align-content: center;
+  grid-template-columns: auto 1fr;
+  gap: 4px 11px;
+  padding: 13px 16px;
+  border: 1px solid color-mix(in srgb, var(--signal-tone), transparent 72%);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--signal-tone), transparent 96%);
+}
+
+.contextSignal_danger {
+  --signal-tone: var(--red);
+}
+
+.contextSignal_warning {
+  --signal-tone: var(--yellow);
+}
+
+.contextSignal strong {
+  grid-row: 1 / 3;
+  align-self: center;
+  color: var(--signal-tone);
+  font-family: var(--font-sans);
+  font-size: 25px;
+}
+
+.contextSignal span {
+  align-self: end;
+  color: var(--text-strong);
+  font-family: var(--font-sans);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.contextSignal small {
+  color: var(--text-dim);
+  font-size: 7px;
+}
+
+.filters {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(260px, 1.2fr) repeat(5, minmax(145px, 0.45fr));
+  margin-bottom: 16px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-panel);
+}
+
+.searchField {
+  display: flex;
+  height: 43px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 13px;
+  color: var(--muted);
+}
+
+.searchField input,
+.selectField select {
+  width: 100%;
+  height: 43px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-family: var(--font-sans);
+  font-size: 10px;
+}
+
+.searchField input {
+  height: auto;
+  border: 0;
+  background: transparent;
+  outline: none;
+}
+
+.searchField input::placeholder {
+  color: var(--text-dim);
+}
+
+.selectField select {
+  padding: 0 34px 0 12px;
+}
+
+.tablePanel {
+  overflow: hidden;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 1180px;
+}
+
+.tableHeader,
+.tableRow {
+  display: grid;
+  min-height: 62px;
+  align-items: center;
+  gap: 18px;
+  grid-template-columns: 1.25fr 1fr 0.85fr 0.85fr 0.4fr 0.68fr 0.58fr 0.62fr;
+  padding: 8px 18px;
+}
+
+.tableHeader {
+  min-height: 49px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--divider);
+  color: var(--text-soft);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  transition: background 150ms ease;
+}
+
+.tableRow:hover {
+  background: rgba(255, 109, 2, 0.025);
+}
+
+.identity {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.identity strong,
+.identity small,
+.operatingSystem {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity strong {
+  color: var(--text-strong);
+  font-size: 10px;
+}
+
+.identity small {
+  color: var(--text-dim);
+  font-size: 8px;
+}
+
+.businessContext {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.businessContext strong,
+.businessContext small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.businessContext strong {
+  color: var(--text-strong);
+  font-size: 9px;
+}
+
+.businessContext small {
+  color: var(--text-dim);
+  font-size: 7px;
+}
+
+.coverageGood,
+.coverageWarning {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--green);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.coverageWarning {
+  color: var(--yellow);
+}
+
+.coverageGood i,
+.coverageWarning i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px color-mix(in srgb, currentColor, transparent 35%);
+}
+
+.vulnerabilityCount {
+  color: var(--text-strong);
+  font-size: 15px;
+}
+
+.severityCounts {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.severityCounts strong {
+  color: var(--red);
+  font-size: 13px;
+}
+
+.severityCounts span {
+  color: var(--orange-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.severityCounts i {
+  width: 1px;
+  height: 16px;
+  background: var(--border-bright);
+}
+
+.risk {
+  --risk-tone: var(--cyan);
+  display: inline-grid;
+  gap: 2px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  color: var(--risk-tone);
+}
+
+.risk strong {
+  grid-row: 1 / 3;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.risk small {
+  max-width: 58px;
+  color: color-mix(in srgb, var(--risk-tone), var(--text-soft) 45%);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.risk_act_now { --risk-tone: var(--red); }
+.risk_prioritize { --risk-tone: var(--orange-text); }
+.risk_plan { --risk-tone: var(--yellow); }
+.risk_monitor { --risk-tone: var(--cyan); }
+
+.lastSeen {
+  color: var(--text-dim);
+  font-size: 9px;
+}
+
+.tableFooter {
+  padding: 13px 18px;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 8px;
+  text-align: right;
+}
+
+@media (max-width: 1400px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .searchField {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .contextSignals {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .searchField {
+    grid-column: auto;
+  }
+}
