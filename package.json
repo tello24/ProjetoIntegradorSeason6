@@ -1,0 +1,17 @@
+{
+  "name": "neoguardian-insight",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@neoguardian/web",
+    "build": "npm run build --workspace=@neoguardian/web",
+    "lint": "npm run lint --workspace=@neoguardian/web",
+    "test": "npm run test --workspace=@neoguardian/web"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
