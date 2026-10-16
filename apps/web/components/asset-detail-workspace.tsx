@@ -188,7 +188,7 @@ export function AssetDetailWorkspace({ asset }: { asset: AssetDetail }) {
       </Link>
 
       <PageTitle
-        eyebrow={asset.credentialed ? "SCAN CREDENCIADO" : "COBERTURA LIMITADA"}
+        eyebrow={asset.credentialed ? "Scan credenciado" : "Cobertura limitada"}
         title={asset.name}
         description={`${asset.address} · ${asset.operating_system ?? "Sistema operacional não identificado"}`}
         action={

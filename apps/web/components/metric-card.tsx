@@ -10,6 +10,7 @@ interface MetricCardProps {
   icon: ReactNode;
   info?: ReactNode;
   infoLabel?: string;
+  featured?: boolean;
 }
 
 export function MetricCard({
@@ -20,9 +21,10 @@ export function MetricCard({
   icon,
   info,
   infoLabel = "Como este indicador é calculado",
+  featured = false,
 }: MetricCardProps) {
   return (
-    <article className={`metric-card metric-card--${tone}`}>
+    <article className={`metric-card metric-card--${tone}${featured ? " metric-card--featured" : ""}`}>
       <div className="metric-card__top">
         <div className="metric-card__label">
           <span>{label}</span>

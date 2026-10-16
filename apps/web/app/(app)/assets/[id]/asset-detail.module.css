@@ -525,8 +525,8 @@
 }
 
 .riskExplanation {
-  border-color: rgba(255, 109, 2, 0.24);
-  background: linear-gradient(135deg, rgba(255, 109, 2, 0.055), var(--surface-panel));
+  border-color: var(--border);
+  background: var(--surface-panel);
 }
 
 .riskExplanation > span {
@@ -619,10 +619,8 @@
   grid-template-columns: minmax(260px, 0.7fr) minmax(520px, 1.3fr);
   align-items: center;
   padding: 24px;
-  border-color: var(--border-bright);
-  background:
-    radial-gradient(circle at 15% 20%, rgba(255, 109, 2, 0.12), transparent 36%),
-    var(--surface-panel);
+  border-color: var(--border);
+  background: var(--surface-panel);
 }
 
 .businessHero > div:first-child > span {

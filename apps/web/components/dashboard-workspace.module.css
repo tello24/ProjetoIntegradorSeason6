@@ -161,9 +161,9 @@
   display: grid;
   width: 22px;
   height: 22px;
-  border: 1px solid color-mix(in srgb, var(--funnel-tone), transparent 55%);
-  border-radius: 50%;
-  color: var(--funnel-tone);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
   font-family: var(--font-mono);
   font-size: 9px;
   place-items: center;
@@ -177,7 +177,7 @@
 }
 
 .funnelIdentity strong {
-  color: var(--funnel-tone);
+  color: var(--text-strong);
   font-family: var(--font-mono);
   font-size: 17px;
 }
@@ -194,14 +194,16 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--funnel-tone), transparent 28%), var(--funnel-tone));
+  background: var(--text-dim);
 }
 
-.funnel_open { --funnel-tone: var(--red); }
-.funnel_triage { --funnel-tone: var(--yellow); }
-.funnel_progress { --funnel-tone: var(--brand-orange-light); }
-.funnel_validation { --funnel-tone: var(--blue); }
-.funnel_resolved { --funnel-tone: var(--green); }
+.funnel_open,
+.funnel_triage,
+.funnel_progress,
+.funnel_validation,
+.funnel_resolved {
+  --funnel-tone: var(--text-dim);
+}
 
 .funnelNote {
   margin: 5px 0 0 33px;
@@ -228,9 +230,7 @@
 .healthMetric span {
   color: var(--text-dim);
   font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.035em;
-  text-transform: uppercase;
+  font-weight: 500;
 }
 
 .healthMetric strong {
@@ -316,6 +316,15 @@
 .metric_default { --metric-tone: var(--cyan); }
 .metric_good { --metric-tone: var(--green); }
 .metric_danger { --metric-tone: var(--red); }
+
+.reliabilityMetric > strong {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.metric_danger > strong {
+  color: var(--red);
+}
 
 .reliabilityTrack {
   height: 4px;

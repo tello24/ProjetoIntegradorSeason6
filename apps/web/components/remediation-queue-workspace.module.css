@@ -5,11 +5,9 @@
   gap: 24px;
   margin-bottom: 17px;
   padding: 16px 18px;
-  border: 1px solid rgba(255, 109, 2, 0.24);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(115deg, rgba(255, 109, 2, 0.08), transparent 46%),
-    rgba(52, 52, 52, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-panel);
 }
 
 .intro > div:first-child {
@@ -79,24 +77,22 @@
   gap: 5px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-top-color: color-mix(in srgb, var(--focus-tone) 52%, transparent);
   border-radius: 5px;
   background: var(--surface-panel);
   color: var(--text-dim);
   cursor: pointer;
   text-align: left;
-  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, background 140ms ease;
 }
 
 .focusCard:hover,
 .focusActive {
-  border-color: color-mix(in srgb, var(--focus-tone) 60%, transparent);
-  background: color-mix(in srgb, var(--focus-tone) 8%, var(--surface));
-  transform: translateY(-1px);
+  border-color: rgba(255, 109, 2, 0.45);
+  background: var(--surface-soft-panel);
 }
 
 .focusCard strong {
-  color: var(--focus-tone);
+  color: var(--text-strong);
   font-family: var(--font-sans);
   font-size: 21px;
 }
@@ -106,13 +102,15 @@
   font-size: 8px;
 }
 
-.focus_all { --focus-tone: var(--cyan); }
+.focus_all,
 .focus_act_now,
-.focus_overdue { --focus-tone: var(--red); }
-.focus_due_soon { --focus-tone: var(--yellow); }
-.focus_unassigned { --focus-tone: var(--orange-text); }
-.focus_reopened { --focus-tone: var(--orange-text); }
-.focus_quick_wins { --focus-tone: var(--green); }
+.focus_overdue,
+.focus_due_soon,
+.focus_unassigned,
+.focus_reopened,
+.focus_quick_wins {
+  --focus-tone: var(--text-dim);
+}
 
 .filters {
   display: grid;

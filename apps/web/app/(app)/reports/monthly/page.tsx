@@ -75,7 +75,7 @@ export default async function MonthlyReportPage({ searchParams }: MonthlyReportP
   return (
     <div className={`page-content ${styles.reportPage}`}>
       <PageTitle
-        eyebrow="RELATÓRIOS / EVOLUÇÃO"
+        eyebrow="Relatórios / evolução"
         title="Comparativo mensal"
         description="Entradas, correções e comportamento do backlog ao longo do tempo."
         action={<ReportActions months={months} severity={severity ?? ""} />}
@@ -118,28 +118,28 @@ export default async function MonthlyReportPage({ searchParams }: MonthlyReportP
         <MetricCard
           helper="Primeira detecção dentro do período"
           icon={<Icon name="vulnerability" size={19} />}
-          label="NOVAS VULNERABILIDADES"
+          label="Novas vulnerabilidades"
           tone="cyan"
           value={report.summary.new_findings}
         />
         <MetricCard
           helper="Ausentes em um scan equivalente posterior"
           icon={<Icon name="shield" size={19} />}
-          label="VULNERABILIDADES CORRIGIDAS"
+          label="Vulnerabilidades corrigidas"
           tone="green"
           value={report.summary.resolved_findings}
         />
         <MetricCard
           helper="Voltaram após uma correção confirmada"
           icon={<Icon name="vulnerability" size={19} />}
-          label="REABERTAS"
+          label="Reabertas"
           tone="red"
           value={report.summary.reopened_findings}
         />
         <MetricCard
           helper="Achados ainda ativos no encerramento do mês"
           icon={<Icon name="report" size={19} />}
-          label="BACKLOG ATUAL"
+          label="Backlog atual"
           tone="blue"
           value={report.summary.current_backlog}
         />
