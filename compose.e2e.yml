@@ -1,0 +1,47 @@
+# Standalone: explicit test settings only; no env_file or production data volumes.
+name: wvm-pi-e2e
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: wvm_e2e
+      POSTGRES_USER: wvm_e2e
+      POSTGRES_PASSWORD: e2e-only-local-password
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wvm_e2e -d wvm_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build:
+      context: ./apps/api
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      APP_ENV: development
+      APP_SECRET_KEY: e2e-only-local-secret-with-more-than-32-characters
+      DATABASE_URL: postgresql+asyncpg://wvm_e2e:e2e-only-local-password@database:5432/wvm_e2e
+      API_CORS_ORIGINS: http://localhost:3001
+      BOOTSTRAP_ADMIN_NAME: Administrador E2E
+      BOOTSTRAP_ADMIN_EMAIL: admin-e2e@example.com
+      BOOTSTRAP_ADMIN_PASSWORD: e2e-only-local-password
+      BOOTSTRAP_CLIENT_NAME: WVM E2E isolated
+      BOOTSTRAP_CLIENT_SLUG: wvm-e2e-isolated
+      SESSION_COOKIE_NAME: ng_session
+      AI_PROVIDER: disabled
+      TICKET_PROVIDER: disabled
+    ports:
+      - "127.0.0.1:8001:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=4)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s

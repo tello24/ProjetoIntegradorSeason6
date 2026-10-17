@@ -27,6 +27,8 @@ venv/
 *.egg-info/
 
 # Coverage and builds
+playwright-report/
+test-results/
 coverage/
 .coverage
 htmlcov/

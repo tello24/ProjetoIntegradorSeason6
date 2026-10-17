@@ -11,7 +11,14 @@
     "lint": "npm run lint --workspace=@neoguardian/web",
     "test": "npm run test:doctor && npm run test --workspace=@neoguardian/web",
     "doctor": "node scripts/doctor.mjs",
-    "test:doctor": "node --test scripts/doctor.test.mjs"
+    "test:doctor": "node --test scripts/doctor.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:up": "docker compose -p wvm-pi-e2e -f compose.e2e.yml up -d --build --wait",
+    "test:e2e:stop": "docker compose -p wvm-pi-e2e -f compose.e2e.yml down",
+    "test:e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
   },
   "engines": {
     "node": ">=24"
