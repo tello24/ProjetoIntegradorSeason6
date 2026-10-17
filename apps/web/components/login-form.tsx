@@ -18,6 +18,7 @@ export function LoginForm() {
     try {
       const response = await browserApi("/auth/login", {
         method: "POST",
+        signal: AbortSignal.timeout(15000),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.get("email"),
@@ -25,13 +26,18 @@ export function LoginForm() {
         }),
       });
       if (!response.ok) {
-        setError(await readApiError(response));
+        setError(response.status >= 500
+          ? "A API respondeu, mas não conseguiu concluir o login. Peça ao responsável para verificar o banco e executar npm run doctor na pasta do projeto."
+          : await readApiError(response));
         return;
       }
       router.replace("/dashboard");
       router.refresh();
-    } catch {
-      setError("A API está indisponível. Confirme se todos os serviços estão em execução.");
+    } catch (loginError) {
+      const timedOut = loginError instanceof Error && loginError.name === "TimeoutError";
+      setError(timedOut
+        ? "O login demorou mais que o esperado. Tente novamente; se persistir, execute npm run doctor na pasta do projeto."
+        : "Não foi possível conectar à API. Confira se os serviços estão em execução e se o endereço e a permissão de acesso (CORS) estão corretos. Para diagnosticar, execute npm run doctor na pasta do projeto.");
     } finally {
       setIsLoading(false);
     }
