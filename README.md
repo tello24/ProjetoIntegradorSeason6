@@ -100,3 +100,34 @@ adicionados sem reescrever o fluxo de importação. Consulte
 conector Jira estão em [`docs/ticketing.md`](docs/ticketing.md).
 
 O Docker é a forma oficial de execução para manter o ambiente do hackathon e do projeto acadêmico reproduzível.
+
+## Diagnóstico de instalação
+
+Se o login informar falha de conexão, execute na raiz do projeto (Node.js 24 ou superior):
+
+```bash
+npm run doctor
+```
+
+Não é necessário instalar pacotes npm para esse comando. Ele confere `.env`, Docker,
+serviços, prontidão da API e autorização CORS, sem alterar configurações ou imprimir segredos.
+O clone pelo Git não inclui `.env`, usuários, dados do PostgreSQL ou scans reais.
+Veja [o guia de diagnóstico](docs/local-diagnostics.md), inclusive para Windows.
+
+## Testes de navegador
+
+O ambiente E2E usa dados sintéticos, banco temporário separado e IA/Jira desativados.
+Não utiliza o `.env` local nem os volumes da aplicação normal.
+
+```bash
+npm ci
+npx playwright install chromium
+npm run test:e2e:up
+npm run test:e2e
+npm run test:e2e:stop
+```
+
+A API de teste usa a porta 8001 e o frontend de teste, 3001. Não reutilize essas portas
+para outros serviços durante a execução. O banco temporário perde os dados de teste
+ao ser parado; os dados da aplicação normal não são afetados. Consulte
+[o protocolo de testes](docs/browser-tests.md) para os cenários, limites e relatórios.

@@ -3,6 +3,39 @@
 Este documento registra as melhorias aprovadas, seu desenho e o estado de cada entrega.
 Itens marcados como planejados não devem ser implementados sem uma nova autorização.
 
+## Faculdade — estabilidade e instalação local
+
+**Escopo:** repositório `tello24/ProjetoIntegradorSeason6`, partindo de `taskPI-frontend`.
+O trabalho visual dessa branch é preservado; não se aplica automaticamente ao projeto da empresa.
+
+### Primeira entrega
+
+- Diagnóstico local somente leitura (`npm run doctor`), sem imprimir credenciais.
+- Verificação de prontidão da API com banco e esquema básico; healthcheck no Compose.
+- Login diferencia credenciais inválidas, indisponibilidade, erro interno e tempo excedido.
+- Testes de navegador com API/PostgreSQL isolados, dados fictícios e IA/Jira desativados.
+- Execução desses testes preparada na CI; publicação e execução no GitHub ainda dependem do push.
+- Guias de instalação/diagnóstico e testes, incluindo cuidados para não apagar volumes reais.
+
+### Critérios de aceite
+
+1. O diagnóstico aponta configurações inconsistentes sem revelar os valores sensíveis.
+2. Falhas do banco retornam estado genérico no endpoint de prontidão, sem SQL ou credenciais.
+3. Login, importação, consulta e persistência do acompanhamento passam no navegador.
+4. Dados, serviços e layout do projeto da empresa permanecem intactos.
+5. Falhas da suíte geram evidências usando apenas informações sintéticas.
+
+### Próxima prioridade proposta: dependências
+
+O `npm audit` da árvore instalada apontou nove dependências vulneráveis (oito classificadas
+como altas e uma crítica), já presentes antes deste lote. A crítica está associada ao
+Next.js 16.3.3. Isso é um alerta de dependência, não evidência de exploração da aplicação.
+
+Antes de publicar na internet, revisar os avisos dos mantenedores, atualizar versões
+compatíveis em uma mudança separada e repetir build, lint e testes. Não executar
+`npm audit fix --force`: a sugestão automática inclui mudanças incompatíveis na configuração
+do ESLint. As contagens mudam com os avisos publicados; repetir a auditoria na atualização.
+
 ## Asset 360 — ficha técnica completa do ativo
 
 **Status:** implementado em setembro de 2026.
