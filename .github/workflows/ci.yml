@@ -105,3 +105,18 @@ jobs:
       - name: Stop isolated services
         if: always()
         run: npm run test:e2e:stop
+
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Test backup guards without Docker
+        run: npm run test:backup
+      - name: Restore a synthetic database in isolated Docker containers
+        env:
+          RUN_BACKUP_INTEGRATION: "1"
+        run: npm run test:backup:integration
