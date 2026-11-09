@@ -10,9 +10,16 @@
 *.nessus.gz
 uploads/
 
+# Database snapshots contain confidential data and password hashes
+backups/
+*.dump
+*.dump.partial
+*.backup
+
 # JavaScript
 node_modules/
 .next/
+*.tsbuildinfo
 out/
 npm-debug.log*
 

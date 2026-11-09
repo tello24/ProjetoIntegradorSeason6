@@ -36,6 +36,8 @@ jobs:
       BOOTSTRAP_CLIENT_NAME: Ambiente CI
       BOOTSTRAP_CLIENT_SLUG: ci
       RUN_DATABASE_TESTS: "1"
+      AI_PROVIDER: disabled
+      TICKET_PROVIDER: disabled
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -69,8 +71,8 @@ jobs:
         run: npm ci
       - name: Lint web
         run: npm run lint
-      - name: Test local diagnostics
-        run: npm run test:doctor
+      - name: Test local setup and diagnostics
+        run: npm test
       - name: Build web
         run: npm run build
 

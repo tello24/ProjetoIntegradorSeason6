@@ -1,0 +1,22 @@
+# Do not send local credentials, scans, virtualenvs or test artifacts to the builder.
+**
+!pyproject.toml
+!app/
+!app/**
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.nessus
+**/*.nessus.gz
+**/uploads
+**/backups
+**/*.dump
+**/*.dump.partial
+**/*.backup
+**/tmp
+**/__pycache__
+**/*.pyc
+**/*.log
+**/.DS_Store

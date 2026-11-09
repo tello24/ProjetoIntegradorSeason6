@@ -1,3 +1,5 @@
+from unittest.mock import AsyncMock
+
 import pytest
 from asyncpg import InvalidPasswordError
 from fastapi.testclient import TestClient
@@ -24,8 +26,11 @@ def test_healthcheck() -> None:
     "error_type", [SQLAlchemyError, InvalidPasswordError, OSError, TimeoutError],
 )
 def test_readiness_checks_database_and_schema_without_disclosing_errors(
-    failure_at, error_type,
+    failure_at, error_type, monkeypatch,
 ) -> None:
+    # This unit test replaces the DB session; startup must not bootstrap a real
+    # database merely because the developer configured an account in their .env.
+    monkeypatch.setattr("app.main.ensure_development_bootstrap", AsyncMock())
     class FakeSession:
         calls = 0
 

@@ -1,0 +1,26 @@
+# The web image only needs its source and the workspace dependency manifests.
+**
+!package.json
+!package-lock.json
+!apps/
+!apps/web/
+!apps/web/**
+**/node_modules
+**/.next
+**/.git
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.nessus
+**/*.nessus.gz
+**/uploads
+**/backups
+**/*.dump
+**/*.dump.partial
+**/*.backup
+**/tmp
+**/*.log
+**/*.tsbuildinfo
+**/.DS_Store

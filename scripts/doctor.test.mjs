@@ -12,6 +12,18 @@ const env = {
 };
 const errors = (checks) => checks.filter((check) => check.status === "error");
 
+test("diagnoses AI configuration locally without revealing the key", () => {
+  assert.ok(checkConfiguration(env).some((item) => item.id === "ai-config" && item.status === "warning"));
+  assert.ok(errors(checkConfiguration({ ...env, AI_PROVIDER: "anthropic" })).some((item) => item.id === "ai-key"));
+  const configured = { ...env, AI_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "secret-not-for-output", ANTHROPIC_MODEL: "claude-haiku-4-5", AI_TIMEOUT_SECONDS: "45", AI_MAX_OUTPUT_TOKENS: "2200" };
+  assert.equal(errors(checkConfiguration(configured)).length, 0);
+  assert.ok(!JSON.stringify(checkConfiguration(configured)).includes(configured.ANTHROPIC_API_KEY));
+  assert.ok(errors(checkConfiguration({ ...configured, AI_TIMEOUT_SECONDS: "0" })).length);
+  assert.ok(errors(checkConfiguration({ ...configured, AI_MAX_OUTPUT_TOKENS: "2.2" })).length);
+  assert.ok(errors(checkConfiguration({ ...configured, ANTHROPIC_MODEL: " " })).length);
+  assert.ok(errors(checkConfiguration({ ...configured, AI_PROVIDER: "invalid" })).length);
+});
+
 test("accepts the local configuration and both CORS formats", () => {
   assert.equal(errors(checkConfiguration(env)).length, 0);
   assert.deepEqual(parseOrigins("http://localhost:3000, http://127.0.0.1:3000"), ["http://localhost:3000", "http://127.0.0.1:3000"]);

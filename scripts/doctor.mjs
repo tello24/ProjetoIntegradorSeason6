@@ -72,6 +72,26 @@ export function checkConfiguration(env) {
   if (env.SESSION_COOKIE_NAME && env.SESSION_COOKIE_NAME !== "ng_session") {
     checks.push(result("cookie-name", "error", "Nome do cookie incompatível com o frontend atual.", "Mantenha SESSION_COOKIE_NAME=ng_session nesta versão."));
   }
+  const provider = env.AI_PROVIDER?.trim() || "disabled";
+  if (provider === "disabled") {
+    checks.push(result("ai-config", "warning", "A IA está desativada; somente o plano-base está disponível.", "Para usar Claude, escolha AI_PROVIDER=anthropic e preencha ANTHROPIC_API_KEY no .env local. Recrie a API após alterar o arquivo."));
+  } else if (["anthropic", "openai"].includes(provider)) {
+    const prefix = provider.toUpperCase();
+    add("ai-key", Boolean(env[`${prefix}_API_KEY`]?.trim()),
+      "Chave do provedor de IA preenchida (validade e saldo não testados).", `Preencha ${prefix}_API_KEY no .env local, nunca no código ou no Git. Recrie a API após alterar o arquivo.`);
+    if (env[`${prefix}_MODEL`] !== undefined) {
+      add("ai-model", Boolean(env[`${prefix}_MODEL`].trim()), "Modelo de IA preenchido.", `Confira ${prefix}_MODEL; esta verificação não confirma acesso ao modelo.`);
+    }
+    for (const [key, min, max] of [["AI_TIMEOUT_SECONDS", 5, 120], ["AI_MAX_OUTPUT_TOKENS", 500, 8192]]) {
+      if (env[key] !== undefined) {
+        const value = Number(env[key]);
+        add(`ai-${key.toLowerCase()}`, Number.isInteger(value) && value >= min && value <= max,
+          `${key} dentro da faixa permitida.`, `Defina ${key} entre ${min} e ${max}.`);
+      }
+    }
+  } else {
+    checks.push(result("ai-provider", "error", "Provedor de IA inválido.", "Use AI_PROVIDER=disabled, anthropic ou openai."));
+  }
   return checks;
 }
 

@@ -2,9 +2,9 @@ FROM node:24-alpine
 
 WORKDIR /workspace
 
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 COPY apps/web/package.json ./apps/web/package.json
-RUN npm install
+RUN npm ci
 
 COPY apps/web ./apps/web
 

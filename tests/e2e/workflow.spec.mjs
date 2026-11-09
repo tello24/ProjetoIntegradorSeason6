@@ -47,6 +47,15 @@ test("rota protegida exige login e senha incorreta não vira erro de conexão", 
   await expect(page.locator("form").getByRole("alert")).toHaveText("E-mail ou senha inválidos.");
 });
 
+test("cookie inválido de outra instalação não provoca loop no login", async ({ page, context }) => {
+  await context.addCookies([{ name: "ng_session", value: "invalid-old-session", domain: "localhost", path: "/" }]);
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("button", { name: "Entrar na plataforma" })).toBeVisible();
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+});
+
 test("login explica falha de conexão e permite tentar novamente", async ({ page }) => {
   await page.route(`${api}/auth/login`, (route) => route.abort("connectionrefused"));
   await login(page);

@@ -3,7 +3,16 @@
 ## Primeiro acesso em outro computador
 
 O Git transporta código, não o `.env`, os volumes do PostgreSQL ou as contas locais.
-Instale/abra Docker Desktop, duplique `.env.example` como `.env` **somente se ainda não
+Instale/abra Docker Desktop e, com Node.js 24+, execute `npm run setup` na raiz do projeto.
+O comando cria `.env` com segredo de sessão, senha administrativa e senha de banco aleatórios;
+a URL do banco é preenchida com a mesma senha. Se `.env` já existir, ele fica intacto.
+Não é necessário instalar pacotes npm e nenhuma conexão externa é feita. As credenciais
+não aparecem no terminal: consulte a conta inicial no próprio `.env` local.
+
+Em sistemas POSIX, o arquivo novo é criado com permissão `0600`; no Windows, proteja
+também a pasta por meio das permissões da sua conta. O comando não altera arquivos existentes.
+
+Como alternativa manual, duplique `.env.example` como `.env` **somente se ainda não
 existir**, escolha um segredo próprio e preencha a conta inicial. A senha inicial precisa
 ter pelo menos 12 caracteres. `APP_ENV=development` habilita o bootstrap local.
 
@@ -53,6 +62,7 @@ em endereços de loopback, com tempo limite e sem seguir redirecionamentos. Não
 Ele verifica:
 
 - presença e coerência das principais variáveis de configuração;
+- seleção do provedor de IA, presença da chave e faixas de timeout/tokens, sem chamada paga;
 - formato de CORS, URL pública e URL interna usadas pelo navegador e servidor;
 - acesso ao Docker/Compose e estado dos quatro serviços do Compose padrão;
 - resposta de prontidão da API, preflight CORS e acesso à página de login.
@@ -83,3 +93,18 @@ alterar o `.env` não atualiza a senha já armazenada no banco.
 Depois de corrigir configurações, recrie os serviços com `docker compose up -d --build`.
 No primeiro início, `BOOTSTRAP_ADMIN_EMAIL` e `BOOTSTRAP_ADMIN_PASSWORD` definem a conta
 local; em development, o bootstrap também pode atualizar essa senha ao reiniciar a API.
+
+Se mudou somente a chave de IA, recrie apenas a API com
+`docker compose up -d --no-deps --force-recreate api`. Atualizar o navegador não recarrega
+as variáveis do servidor. O guia [de IA](ai.md) descreve os códigos de erro e o cache.
+
+## Construção das imagens
+
+Os arquivos `.dockerignore` permitem apenas fontes e manifestos necessários ao build;
+excluem `.env`, chaves, exportações `.nessus`, caches e dependências locais. Isso não
+substitui revisar o que entra no Git nem protege arquivos montados por volume em execução.
+O frontend usa `npm ci` para instalar a árvore registrada em `package-lock.json`, falhando
+se o manifesto estiver inconsistente, em vez de resolver versões diferentes silenciosamente.
+
+Referências: [contexto de build do Docker](https://docs.docker.com/build/concepts/context/)
+e [instalação com npm ci](https://docs.npmjs.com/cli/v11/commands/npm-ci/).

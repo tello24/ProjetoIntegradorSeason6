@@ -23,10 +23,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (path === "/login" && hasSession) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
+  // A cookie may be expired or belong to another local installation. Its presence
+  // must not redirect /login back to a dashboard that rejects it with HTTP 401.
   return NextResponse.next();
 }
 
