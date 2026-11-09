@@ -43,6 +43,15 @@ sintéticos. Esses comandos não param a instalação normal nas portas 3000/800
 5. Login, importação pelo seletor de arquivo, dashboard, detalhe, atribuição de responsável,
    persistência do acompanhamento, plano-base sem IA paga, relatório mensal e logout.
 6. Rejeição de XML inválido com preservação da sessão.
+7. Cookie inválido ou de outra instalação não provoca ciclo infinito de redirecionamento.
+8. Exclusão de scan sintético: cancelar não envia pedido, falha preserva a linha,
+   confirmar remove o scan e a ausência persiste após atualizar a página.
+9. Painel administrativo da IA: consulta/filtro/atualização sem gerar análises, temas claro e
+   escuro, largura de celular, falha da API e recuperação da consulta.
+10. Visualizador não vê o menu administrativo, recebe 403 na API e é redirecionado da página.
+
+O fluxo de remediação também confere o aviso de IA desativada e a tentativa manual:
+cancelar a confirmação não envia requisição; confirmar envia uma única solicitação.
 
 A suíte também observa erros JavaScript/hidratação durante o fluxo completo. O navegador
 usa America/Sao_Paulo e o servidor UTC para revelar diferenças de renderização de datas.
@@ -60,6 +69,10 @@ depende de publicar a branch e habilitar Actions no repositório.
 
 ## Diagnóstico e backend
 
-`npm run test:doctor` valida os casos do diagnóstico local sem consultar seu Docker ou banco.
-`pytest apps/api` inclui testes de prontidão com sessões simuladas. Os testes de integração
+`npm test` inclui os testes do setup e do diagnóstico local, sem consultar seu Docker ou banco.
+Os testes do setup usam pastas temporárias próprias e conferem que um `.env` existente não muda.
+`pytest apps/api` inclui testes de prontidão com sessões simuladas e sem bootstrap real.
+Uma proteção automática bloqueia chamadas HTTP reais dos conectores de IA/Jira durante pytest;
+os testes precisam fornecer respostas simuladas, mesmo se houver uma chave ativa no `.env`.
+Os testes de integração
 existentes exigem uma base dedicada e `RUN_DATABASE_TESTS=1`; nunca os aponte para produção.

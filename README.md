@@ -13,14 +13,22 @@ Aplicação interna em desenvolvimento.
 ## Desenvolvimento local
 
 1. Instale e abra o Docker Desktop.
-2. Copie `.env.example` para `.env`.
-3. Troque `APP_SECRET_KEY` e `BOOTSTRAP_ADMIN_PASSWORD` por valores locais.
+2. Com Node.js 24+, execute `npm run setup` (não precisa de `npm install`). O comando cria
+   `.env` com credenciais aleatórias **somente se o arquivo ainda não existir**.
+3. Consulte a conta inicial no `.env`. Para habilitar IA, configure provedor e chave nesse
+   arquivo; uma instalação nova começa com IA e Jira desativados.
 4. Inicie os serviços com `docker compose up --build`.
 5. Acesse a interface em `http://localhost:3000` e a documentação da API em `http://localhost:8000/docs`.
 
 No primeiro início, o backend cria a organização e a conta local definidas no `.env`.
 Use `BOOTSTRAP_ADMIN_EMAIL` e `BOOTSTRAP_ADMIN_PASSWORD` para entrar. Essa criação
 automática só funciona quando `APP_ENV=development`.
+
+Sem Node instalado no computador, crie `.env` a partir de `.env.example` manualmente,
+apenas se ele ainda não existir, e troque `APP_SECRET_KEY`, `BOOTSTRAP_ADMIN_PASSWORD`
+e a senha do banco (em `POSTGRES_PASSWORD` **e** `DATABASE_URL`). Não sobrescreva um
+`.env` já configurado nem envie esse arquivo pelo Git. O setup não conecta serviços,
+não chama IA e não altera o banco existente.
 
 Para gerar um segredo local forte:
 
@@ -81,8 +89,10 @@ prefixo `NEXT_PUBLIC_` e não devem ser commitadas. Consulte [`docs/ai.md`](docs
 configuração completa.
 
 Sem uma chave ativa, a aplicação continua funcionando e mostra um plano-base identificado como
-tal. A chamada só ocorre por ação explícita, usa saída estruturada, não envia IP, hostname ou
-evidência bruta do plugin e solicita à OpenAI que a resposta não seja armazenada pelo provedor.
+tal. A chamada só ocorre por ação explícita, usa saída estruturada e limita o texto técnico.
+Um filtro remove padrões de IPs, hostnames, URLs e e-mails antes do envio, mas não garante
+anonimização completa de evidências em texto livre. Use somente dados autorizados pela
+organização. Na integração OpenAI, a requisição solicita que a resposta não seja armazenada.
 Tokens, custo estimado, modelo, provedor, versão do prompt e data ficam registrados localmente.
 
 O controle de acesso possui quatro perfis: **Administrador**, **Gestor**, **Analista** e
@@ -113,6 +123,52 @@ Não é necessário instalar pacotes npm para esse comando. Ele confere `.env`, 
 serviços, prontidão da API e autorização CORS, sem alterar configurações ou imprimir segredos.
 O clone pelo Git não inclui `.env`, usuários, dados do PostgreSQL ou scans reais.
 Veja [o guia de diagnóstico](docs/local-diagnostics.md), inclusive para Windows.
+
+Depois de trocar a chave no `.env`, carregue-a novamente com:
+
+```bash
+docker compose up -d --no-deps --force-recreate api
+```
+
+Não basta editar `.env.example` ou atualizar a página. Erros de configuração, chave, saldo,
+conexão e limite de saída agora recebem orientações distintas. Uma tentativa pode ser cobrada
+pelo provedor mesmo quando não resulta em análise salva; não há repetição automática.
+
+## Administração da IA
+
+Administradores encontram o painel no menu **Administração da IA** (`/admin/ai`). Ele mostra
+configuração sem segredos, análises/tokens/custo estimado de 7/30/90 dias, consumo por modelo
+e falhas novas com orientação. A consulta não gera conteúdo nem consome tokens.
+O custo exibido cobre apenas análises salvas, incluindo versões antigas; tentativas com custo
+desconhecido ficam separadas. Não é uma fatura, consulta de saldo ou limite de orçamento.
+Veja [as regras e limitações do monitor](docs/ai.md#painel-administrativo-local).
+
+## Backup do banco
+
+Com Docker aberto, na pasta deste projeto, execute `npm run backup` para criar uma
+cópia local em `backups/`. O comando preserva o banco em uso, não copia `.env` e não
+sobrescreve backups anteriores. Os arquivos contêm dados sensíveis e **não são
+criptografados**: ficam fora do Git, mas exigem armazenamento protegido.
+
+`npm run backup:verify -- "PASTA_DO_BACKUP"` confere a integridade.
+`npm run backup:restore -- "PASTA_DO_BACKUP" --trusted` recupera um backup confiável
+em **outro banco isolado**, sem substituir o atual ou mudar a aplicação automaticamente.
+Leia [o guia de backup e recuperação](docs/backups.md) antes de restaurar.
+
+## Exclusão de scans
+
+Na página **Scans**, administradores podem usar **Excluir** na coluna **Ações**.
+A confirmação identifica o scan e avisa que a remoção é definitiva na aplicação.
+Scans em processamento não podem ser excluídos. Nada é removido do Nessus.
+
+O scan e suas observações saem dos indicadores; se ele era o mais recente, um scan
+anterior pode voltar a ser a referência. O ciclo de correções/reaberturas e o relatório
+mensal são recalculados a partir dos scans restantes. Excluir não equivale a corrigir
+uma vulnerabilidade. Registros operacionais, análises de IA, tickets e ativos
+compartilhados são preservados, sem chamadas a provedores. A operação é auditada.
+Guarde o `.nessus` original caso precise reimportar: não há botão de desfazer.
+
+Veja [os detalhes e testes da exclusão](docs/scan-deletion.md).
 
 ## Testes de navegador
 

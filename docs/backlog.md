@@ -25,6 +25,27 @@ O trabalho visual dessa branch é preservado; não se aplica automaticamente ao 
 4. Dados, serviços e layout do projeto da empresa permanecem intactos.
 5. Falhas da suíte geram evidências usando apenas informações sintéticas.
 
+### Backup e recuperação local — implementado
+
+- Backup PostgreSQL 17 em pasta exclusiva, arquivo custom e manifesto SHA-256.
+- Verificação offline, permissões restritas em POSIX e exclusão dos arquivos do Git/build.
+- Recuperação em contêiner e volume novos, sem rede externa ou portas publicadas.
+- Banco ativo, `.env` e frontend preservados; sem IA/Jira e sem troca automática de banco.
+- Testes unitários e recuperação real com dados fictícios, incluindo planos, IA e tickets.
+- CI preparada para validar a recuperação; execução remota depende da publicação.
+- Sem criptografia automática, retenção, agendamento ou cópia externa nesta etapa.
+
+### Painel administrativo da IA — implementado
+
+- Página `/admin/ai`, menu exclusivo do administrador e autorização na API.
+- Configuração por lista permitida, sem chave, workspace ID ou outros segredos.
+- Períodos móveis de 7/30/90 dias, todas as versões salvas e agrupamento por modelo.
+- Custos históricos preservados; tentativas falhas com custo desconhecido separadas do total.
+- Falhas novas registradas na auditoria com código seguro, sem prompt ou resposta bruta.
+- Estados de carregamento, erro e ausência de registros; temas claro/escuro e responsividade.
+- Não consulta saldo nem validade da chave, não chama provedores e não altera o `.env`.
+- Limite de orçamento, bloqueio automático de gastos e conciliação com faturas não incluídos.
+
 ### Próxima prioridade proposta: dependências
 
 O `npm audit` da árvore instalada apontou nove dependências vulneráveis (oito classificadas
