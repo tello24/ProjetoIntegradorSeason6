@@ -7,7 +7,8 @@ WORKDIR /app
 
 COPY pyproject.toml ./
 COPY app ./app
-RUN pip install --no-cache-dir .
+RUN python -m pip install --no-cache-dir --upgrade "pip==26.3" \
+    && python -m pip install --no-cache-dir .
 
 EXPOSE 8000
 

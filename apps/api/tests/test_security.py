@@ -1,9 +1,10 @@
 from uuid import uuid4
 
+import jwt
 import pytest
 from pydantic import ValidationError
 
-from app.core.config import DEVELOPMENT_SECRET, Settings
+from app.core.config import DEVELOPMENT_SECRET, Settings, settings
 from app.core.security import (
     SessionTokenError,
     create_session_token,
@@ -38,6 +39,34 @@ def test_tampered_session_token_is_rejected() -> None:
 
     with pytest.raises(SessionTokenError):
         decode_session_token(tampered)
+
+
+@pytest.mark.parametrize("case", ["expired", "wrong-issuer", "missing-expiration"])
+def test_session_claims_remain_required_after_jwt_upgrade(case: str) -> None:
+    token = create_session_token(user_id=uuid4(), client_id=7, role="analista")
+    payload = decode_session_token(token)
+    if case == "expired":
+        payload["exp"] = 1
+    elif case == "wrong-issuer":
+        payload["iss"] = "untrusted-issuer"
+    else:
+        del payload["exp"]
+    altered = jwt.encode(payload, settings.app_secret_key, algorithm="HS256")
+
+    with pytest.raises(SessionTokenError):
+        decode_session_token(altered)
+
+
+@pytest.mark.parametrize("algorithm", ["none", "HS384"])
+def test_only_the_configured_session_algorithm_is_accepted(algorithm: str, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "app_secret_key", "test-session-signing-key-" * 4)
+    token = create_session_token(user_id=uuid4(), client_id=7, role="analista")
+    payload = decode_session_token(token)
+    key = None if algorithm == "none" else settings.app_secret_key
+    altered = jwt.encode(payload, key, algorithm=algorithm)
+
+    with pytest.raises(SessionTokenError):
+        decode_session_token(altered)
 
 
 def test_production_rejects_the_known_development_secret() -> None:
