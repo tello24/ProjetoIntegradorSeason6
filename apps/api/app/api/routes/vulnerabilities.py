@@ -1016,15 +1016,20 @@ async def _generate_or_reuse_remediation(
     if saved is not None and not regenerate:
         return saved
 
-    generated = await generate_remediation_plan(context, config=settings.active_ai)
+    generated = await generate_remediation_plan(
+        context,
+        config=settings.active_ai,
+        configuration_error="disabled" if settings.ai_provider == "disabled" else "missing_key",
+    )
     if generated.source == "scanner_template":
         if saved is not None:
             return saved.model_copy(
                 update={
                     "warning": (
-                        "A nova geração falhou ou a IA não está configurada. Mantivemos a versão "
-                        "salva, sem substituir o histórico."
-                    )
+                        "Mantivemos a versão salva, sem substituir o histórico. "
+                        + (generated.warning or "A nova geração não foi concluída.")
+                    ),
+                    "error_code": generated.error_code,
                 }
             )
         return generated.model_copy(

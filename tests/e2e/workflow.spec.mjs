@@ -118,6 +118,21 @@ test("importação, dashboard, responsável, histórico e relatório funcionam n
   // Deliberately uses the explicit fallback, never a paid provider.
   await page.getByRole("button", { name: /GERAR ANÁLISE UMA VEZ/ }).click();
   await expect(page.getByText("PLANO-BASE", { exact: true })).toBeVisible();
+  await expect(page.locator(".ai-plan__warning")).toContainText("A IA está desativada");
+  await expect(page.locator(".ai-plan__metadata")).not.toContainText("Sem consumo de tokens");
+  const retry = page.getByRole("button", { name: "TENTAR GERAR ANÁLISE", exact: true });
+  await expect(retry).toBeEnabled();
+  let retryCalls = 0;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().endsWith("/remediation")) retryCalls += 1;
+  });
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await retry.click();
+  expect(retryCalls).toBe(0);
+  page.once("dialog", (dialog) => dialog.accept());
+  await retry.click();
+  await expect(retry).toBeEnabled();
+  expect(retryCalls).toBe(1);
   await page.goto("/reports/monthly");
   await expect(page.getByRole("heading", { name: "Comparativo mensal", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Detalhamento mensal", exact: true })).toBeVisible();

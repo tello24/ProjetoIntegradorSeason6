@@ -31,6 +31,7 @@ export interface RemediationPlanData {
   stale: boolean;
   can_regenerate: boolean;
   warning: string | null;
+  error_code?: string | null;
 }
 
 export function RemediationPlan({
@@ -49,6 +50,10 @@ export function RemediationPlan({
   const [error, setError] = useState<string | null>(null);
 
   async function generatePlan(regenerate = false) {
+    if (loading) return;
+    if (plan?.source === "scanner_template" && !window.confirm(
+      "Tentar gerar a análise novamente pode consumir tokens, mesmo se a tentativa anterior falhou. Continuar?",
+    )) return;
     if (
       regenerate
       && !window.confirm(
@@ -120,7 +125,8 @@ export function RemediationPlan({
             </p>
             <small>
               O resultado será salvo: abrir esta página novamente não fará uma nova cobrança.
-              Endereço do ativo e evidências sensíveis não são enviados ao provedor.
+              Os dados técnicos passam por filtros antes do envio, mas a anonimização não é
+              garantida. Use apenas evidências autorizadas para envio ao provedor.
             </small>
           </div>
           {canGenerate ? (
@@ -178,7 +184,17 @@ export function RemediationPlan({
 
           <div className="ai-plan__footer">
             <p><span>ESFORÇO ESTIMADO</span>{plan.estimated_effort}</p>
-            {plan.can_regenerate && (
+            {plan.source === "scanner_template" && canGenerate && (
+              <button
+                className="button button--secondary"
+                disabled={loading}
+                onClick={() => generatePlan(false)}
+                type="button"
+              >
+                {loading ? "GERANDO..." : "TENTAR GERAR ANÁLISE"}
+              </button>
+            )}
+            {plan.source !== "scanner_template" && plan.can_regenerate && (
               <button
                 className="button button--secondary"
                 disabled={loading}
@@ -258,7 +274,7 @@ function PlanMetadata({ plan }: { plan: RemediationPlanData }) {
   if (plan.source === "scanner_template") {
     return (
       <div className="ai-plan__metadata">
-        <span>Sem consumo de tokens</span>
+        <span>Plano-base local, não gerado por IA</span>
         <span>Gerado a partir dos dados do scanner</span>
       </div>
     );

@@ -11,6 +11,7 @@ from urllib import error, request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.core.config import AIProviderConfig
+from app.services.ai_errors import AIResponseError, ai_failure_warning, classify_ai_error
 from app.services.remediation_knowledge import (
     KNOWLEDGE_VERSION,
     build_official_references,
@@ -189,15 +190,23 @@ class RemediationPlan(RemediationDraft):
     stale: bool = False
     can_regenerate: bool = False
     warning: str | None = None
+    error_code: str | None = None
 
 
 async def generate_remediation_plan(
     context: RemediationContext,
     *,
     config: AIProviderConfig | None,
+    configuration_error: Literal["disabled", "missing_key"] | None = None,
 ) -> RemediationPlan:
     if config is None:
-        return build_scanner_template(context)
+        fallback = build_scanner_template(context)
+        if configuration_error:
+            return fallback.model_copy(update={
+                "error_code": configuration_error,
+                "warning": ai_failure_warning(configuration_error),
+            })
+        return fallback
 
     try:
         if config.provider == "anthropic":
@@ -212,21 +221,19 @@ async def generate_remediation_plan(
         TypeError,
         ValueError,
         ValidationError,
-    ):
+    ) as exc:
+        code = classify_ai_error(exc)
         logger.warning(
-            "Falha ao gerar análise de remediação com o provedor %s.",
+            "Falha de remediação: provider=%s code=%s http_status=%s",
             config.provider,
-            exc_info=True,
+            code,
+            exc.code if isinstance(exc, error.HTTPError) else None,
         )
         fallback = build_scanner_template(context)
         return fallback.model_copy(
             update={
-                "warning": (
-                    "A resposta da IA não pôde ser utilizada desta vez. Exibimos um plano-base "
-                    "construído a partir da recomendação do scanner. Nenhuma análise ou estimativa "
-                    "de custo foi salva no histórico, mas o provedor pode contabilizar os tokens "
-                    "processados na tentativa."
-                )
+                "warning": ai_failure_warning(code),
+                "error_code": code,
             }
         )
 
@@ -411,7 +418,7 @@ def _openai_output_text(response_payload: dict[str, object]) -> str:
 def _anthropic_output_text(response_payload: dict[str, object]) -> str:
     stop_reason = response_payload.get("stop_reason")
     if stop_reason in {"max_tokens", "refusal"}:
-        raise ValueError(f"Resposta estruturada interrompida pela Anthropic: {stop_reason}.")
+        raise AIResponseError("output_limit" if stop_reason == "max_tokens" else "refusal")
 
     for content in response_payload.get("content") or []:
         if isinstance(content, dict) and content.get("type") == "text":
@@ -527,19 +534,16 @@ def _validate_semantic_consistency(
             "reinstalação",
         )
     ):
-        raise ValueError(
-            "O plano contradiz a evidência: os pacotes corrigidos já estão instalados "
-            "e falta reboot."
-        )
+        raise AIResponseError("unsafe_response")
 
     if context.cvss3_vector and "/AV:L" in context.cvss3_vector.upper() and any(
         unsupported_impact in rendered
         for unsupported_impact in ("execução remota de código", "remote code execution", " rce")
     ):
-        raise ValueError("O plano contradiz o vetor local ao afirmar execução remota de código.")
+        raise AIResponseError("unsafe_response")
 
     if re.search(r"\brpm\s+(?:-[a-z]+\s+)*-e\b", execution_steps):
-        raise ValueError("O plano contém remoção direta de pacote por rpm -e.")
+        raise AIResponseError("unsafe_response")
 
 
 def _normalize_remediation_payload(payload: dict[str, object]) -> dict[str, object]:

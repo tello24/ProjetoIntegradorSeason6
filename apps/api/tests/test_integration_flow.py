@@ -557,7 +557,7 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         assert client.get(f"/api/v1/vulnerabilities/{finding_id}/remediation").json() is None
         ai_calls = 0
 
-        async def fake_ai_generation(context, *, config):
+        async def fake_ai_generation(context, *, config, configuration_error=None):
             nonlocal ai_calls
             ai_calls += 1
             assert context.scanner_evidence is not None
@@ -617,6 +617,27 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         assert ai_history.status_code == 200
         assert len(ai_history.json()["items"]) == 1
         assert ai_history.json()["items"][0]["version"] == 1
+
+        async def failed_ai_generation(context, *, config, configuration_error=None):
+            from app.services.remediation import build_scanner_template
+
+            return build_scanner_template(context).model_copy(update={
+                "error_code": "billing",
+                "warning": "Saldo insuficiente no provedor.",
+            })
+
+        monkeypatch.setattr(vulnerability_routes, "generate_remediation_plan", failed_ai_generation)
+        failed_regeneration = client.post(
+            f"/api/v1/vulnerabilities/{finding_id}/remediation/regenerate"
+        )
+        assert failed_regeneration.json()["version"] == 2
+        assert failed_regeneration.json()["source"] == "anthropic"
+        assert failed_regeneration.json()["error_code"] == "billing"
+        assert "Saldo insuficiente" in failed_regeneration.json()["warning"]
+        preserved = client.get(f"/api/v1/vulnerabilities/{finding_id}/remediation")
+        assert preserved.json()["version"] == 2
+        assert preserved.json()["warning"] is None
+        assert preserved.json()["error_code"] is None
 
         second_import = client.post(
             "/api/v1/scans/import",

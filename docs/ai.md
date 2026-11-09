@@ -6,8 +6,9 @@
 2. Se ela já existe, o conteúdo salvo é exibido e nenhuma API externa é chamada.
 3. Se não existe, um analista ou administrador pode autorizar a primeira geração.
 4. O backend reúne a evidência específica do plugin, contexto do ativo, CVSS, VPR, EPSS e
-   explorabilidade. O texto é limitado e IPs, hostnames, URLs e e-mails são removidos antes da
-   requisição.
+   explorabilidade. O texto é limitado e um filtro remove padrões de IPs, hostnames, URLs e
+   e-mails antes da requisição. Esse filtro não garante anonimização completa de texto livre;
+   use apenas dados cujo envio ao provedor tenha sido autorizado pela organização.
 5. Regras determinísticas e fatos extraídos pela aplicação acompanham o pedido. Por exemplo, se
    os pacotes corrigidos já estão instalados e o plugin informa reboot pendente, um plano que
    recomende reinstalação ou nova atualização é rejeitado.
@@ -115,3 +116,33 @@ O custo salvo é uma estimativa calculada com os tokens informados pelo provedor
 `.env`. A cobrança oficial continua sendo a apresentada pelo painel do fornecedor.
 Uma tentativa processada e posteriormente rejeitada pela aplicação também pode consumir tokens no
 provedor, mesmo sem produzir uma análise salva no histórico local.
+
+## Diagnóstico de falhas em uma instalação clonada
+
+O Git não inclui `.env`, chave, créditos ou o banco de outro computador. Alterar somente
+`.env.example` não configura a instalação. Crie/preencha `.env` e recrie a API; execute
+`npm run doctor` para conferir as variáveis sem mostrar segredos ou fazer chamadas pagas.
+O diagnóstico local não comprova a validade da chave ou o saldo.
+
+A resposta de remediação inclui `error_code` e uma orientação segura:
+
+| Código | O que verificar |
+| --- | --- |
+| `disabled` / `missing_key` | Provedor e chave no `.env`; API recriada. Nenhuma chamada foi feita. |
+| `authentication` / `permission` | Validade da chave e permissões de workspace/modelo. |
+| `billing` / `rate_limit` | Créditos, faturamento e limites no painel do provedor. |
+| `timeout` / `connection` | Prazo, rede, proxy e certificados; não desativar TLS. |
+| `model_not_found` / `request_rejected` | Modelo e compatibilidade dos parâmetros. |
+| `output_limit` | Resposta cortada; revisar orçamento de tokens antes de tentar novamente. |
+| `refusal` / `unsafe_response` / `invalid_response` | Contexto recusado ou resposta reprovada pela validação; revisar evidências. |
+| `provider_unavailable` | Indisponibilidade temporária do provedor. |
+
+Não há repetição automática. Após resolver a causa, analistas e administradores podem usar
+**TENTAR GERAR ANÁLISE** no plano-base, com confirmação de possível consumo. O pedido usa a rota
+normal de geração e respeita o cache; não precisa permissão de regenerar uma versão já salva.
+Se uma regeneração falhar, a versão anterior permanece salva e a causa aparece na tela.
+Os registros de falha contêm apenas provedor, código e status HTTP, não a resposta bruta ou a chave.
+
+Referências do contrato Anthropic:
+[erros da API](https://platform.claude.com/docs/en/api/errors) e
+[saídas estruturadas](https://platform.claude.com/docs/en/build-with-claude/structured-outputs).

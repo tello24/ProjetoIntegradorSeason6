@@ -84,6 +84,41 @@ async def test_without_provider_returns_an_honest_scanner_template() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("reason", ["disabled", "missing_key"])
+async def test_missing_configuration_is_actionable_without_a_request(monkeypatch, reason):
+    def forbidden(*args, **kwargs):
+        pytest.fail("No provider request is allowed without configuration")
+
+    monkeypatch.setattr(remediation, "_post_anthropic_payload", forbidden)
+    plan = await generate_remediation_plan(
+        remediation_context(),
+        config=None,
+        configuration_error=reason,
+    )
+    assert plan.error_code == reason
+    assert "Nenhuma chamada de IA" in plan.warning
+
+
+@pytest.mark.asyncio
+async def test_failure_is_not_retried_and_logs_never_include_provider_content(monkeypatch, caplog):
+    calls = 0
+
+    def invalid_response(*args):
+        nonlocal calls
+        calls += 1
+        return {"content": [{"type": "text", "text": '{"secret":"private-sentinel"}'}]}
+
+    monkeypatch.setattr(remediation, "_post_anthropic_payload", invalid_response)
+    plan = await generate_remediation_plan(
+        remediation_context(), config=provider_config("anthropic")
+    )
+    assert calls == 1
+    assert plan.error_code == "invalid_response"
+    assert "private-sentinel" not in caplog.text
+    assert "private-sentinel" not in plan.model_dump_json()
+
+
+@pytest.mark.asyncio
 async def test_openai_request_redacts_data_and_records_usage(monkeypatch) -> None:
     captured: dict[str, object] = {}
     context = remediation_context().model_copy(
@@ -169,9 +204,7 @@ def test_anthropic_schema_moves_unsupported_constraints_to_descriptions() -> Non
             return set().union(*(schema_keys(item) for item in value))
         return set()
 
-    assert not (
-        {"minLength", "maxLength", "minItems", "maxItems"} & schema_keys(schema)
-    )
+    assert not ({"minLength", "maxLength", "minItems", "maxItems"} & schema_keys(schema))
     assert "Restrições validadas pela aplicação" in serialized
 
 
@@ -332,9 +365,7 @@ async def test_kernel_guardrail_does_not_reject_a_prohibitive_package_update_men
     )
     safe = draft_payload()
     safe["steps"] = ["Reinicie o ativo em uma janela de manutenção autorizada."]
-    safe["cautions"] = [
-        "Não execute dnf update: os pacotes corrigidos já estão instalados."
-    ]
+    safe["cautions"] = ["Não execute dnf update: os pacotes corrigidos já estão instalados."]
 
     def fake_post(payload, api_key, workspace_id, timeout_seconds):
         return {
