@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import session_factory
+from app.services.scan_deletion import lock_scan_changes
 from app.services.scanners.base import ScanParseError
 from app.services.scanners.models import ScanFinding, ScanParseResult
 from app.services.scanners.registry import get_scanner_adapter
@@ -38,6 +39,7 @@ class ScanImporter:
         scanner_key: str = "nessus",
     ) -> ImportOutcome:
         scope_key = _scope_key(parsed, scanner_key=scanner_key)
+        await lock_scan_changes(self.session, client_id)
         await self.session.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:lock_key, 0))"),
             {"lock_key": f"{client_id}:{scope_key}"},

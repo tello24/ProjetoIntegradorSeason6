@@ -859,6 +859,9 @@ async def get_vulnerability_history(
             WHERE event.cliente_id = :client_id
               AND event.recurso = 'vulnerability_workflow'
               AND event.recurso_id = :workflow_id
+              AND event.acao NOT IN (
+                  'workflow.superseded_auto_resolved', 'workflow.superseded_auto_reopened'
+              )
             ORDER BY event.criado_em DESC, event.id DESC
             LIMIT 50
             """

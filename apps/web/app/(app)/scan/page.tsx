@@ -15,6 +15,7 @@ interface ScanResponse {
   items: ScanItem[];
   total: number;
   can_import: boolean;
+  can_delete: boolean;
 }
 
 export default async function ScansPage() {
@@ -25,6 +26,7 @@ export default async function ScansPage() {
   return (
     <ScanWorkspace
       canImport={scans.can_import}
+      canDelete={scans.can_delete}
       initialScans={scans.items}
       scannerSources={sources}
     />

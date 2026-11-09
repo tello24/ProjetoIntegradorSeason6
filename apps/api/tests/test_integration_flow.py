@@ -1,11 +1,17 @@
 import os
+from unittest.mock import AsyncMock
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
+from app.api.dependencies import CurrentUser, get_current_user
 from app.api.routes import vulnerabilities as vulnerability_routes
 from app.core.config import settings
+from app.core.database import session_factory
 from app.main import app
+from app.services import scan_deletion
 from app.services.remediation import RemediationPlan
 
 pytestmark = pytest.mark.skipif(
@@ -419,6 +425,8 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         manager_scans = client.get("/api/v1/scans")
         assert manager_scans.status_code == 200
         assert manager_scans.json()["can_import"] is False
+        assert manager_scans.json()["can_delete"] is False
+        assert client.delete(f"/api/v1/scans/{import_status.json()['scan_id']}").status_code == 403
         assert client.post(
             "/api/v1/scans/import",
             files={"file": ("blocked.nessus", SAMPLE_NESSUS, "application/xml")},
@@ -443,6 +451,8 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         analyst_scans = client.get("/api/v1/scans")
         assert analyst_scans.status_code == 200
         assert analyst_scans.json()["can_import"] is True
+        assert analyst_scans.json()["can_delete"] is False
+        assert client.delete(f"/api/v1/scans/{import_status.json()['scan_id']}").status_code == 403
         analyst_queue = client.get("/api/v1/vulnerabilities/queue")
         assert analyst_queue.status_code == 200
         assert analyst_queue.json()["can_edit"] is True
@@ -461,6 +471,8 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         )
         assert visualizer_login.status_code == 200
         assert visualizer_login.json()["user"]["role"] == "visualizador"
+        assert client.get("/api/v1/scans").json()["can_delete"] is False
+        assert client.delete(f"/api/v1/scans/{import_status.json()['scan_id']}").status_code == 403
         visualizer_queue = client.get("/api/v1/vulnerabilities/queue")
         assert visualizer_queue.status_code == 200
         assert visualizer_queue.json()["can_edit"] is False
@@ -850,7 +862,102 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         assert updated_asset.json()["changes"]["persistent_findings"] == 0
         assert updated_asset.json()["changes"]["reopened_findings"] == 1
 
+        # Removing an intermediate scan must undo its resolution/reopening effects.
+        assert client.get("/api/v1/scans").json()["can_delete"] is True
+        foreign_user = CurrentUser(
+            UUID(user_id), "Outro cliente", "test@example.com", -999,
+            "Outro cliente", "administrador",
+        )
+        app.dependency_overrides[get_current_user] = lambda: foreign_user
+        try:
+            assert client.delete(f"/api/v1/scans/{second_scan_id}").status_code == 404
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+        assert client.get("/api/v1/scans").json()["total"] == 3
+
+        # A recalculation failure must roll back the scan and cascaded observations.
+        with monkeypatch.context() as failure_patch:
+            failure_patch.setattr(
+                scan_deletion, "_rebuild_lifecycle",
+                AsyncMock(side_effect=RuntimeError("synthetic-recalculation-failure")),
+            )
+            with pytest.raises(RuntimeError, match="synthetic-recalculation-failure"):
+                client.delete(f"/api/v1/scans/{second_scan_id}")
+        assert client.get("/api/v1/scans").json()["total"] == 3
+        assert client.get(f"/api/v1/scans/{second_scan_id}/comparison").status_code == 200
+
+        deleted = client.delete(f"/api/v1/scans/{second_scan_id}")
+        assert deleted.status_code == 200, deleted.text
+        assert deleted.json()["deleted"] is True
+        assert client.delete(f"/api/v1/scans/{second_scan_id}").status_code == 404
+        assert client.get(f"/api/v1/scans/{second_scan_id}/comparison").status_code == 404
+        surviving_finding = reopened.json()["items"][0]["id"]
+        recalculated = client.get(f"/api/v1/vulnerabilities/{surviving_finding}").json()
+        assert recalculated["workflow"]["status"] == "in_progress"
+        assert recalculated["workflow"]["resolution_count"] == 0
+        assert recalculated["workflow"]["reopen_count"] == 0
+        assert recalculated["workflow"]["note"]
+        assert recalculated["workflow"]["assignee"]
+        saved_ai = client.get(f"/api/v1/vulnerabilities/{surviving_finding}/remediation")
+        assert saved_ai.json()["version"] == 2
+        assert ai_calls == 2
+        recalculated_report = client.get("/api/v1/reports/monthly").json()["summary"]
+        assert recalculated_report["scans"] == 2
+        assert recalculated_report["new_findings"] == 1
+        assert recalculated_report["resolved_findings"] == 0
+        assert recalculated_report["reopened_findings"] == 0
+        assert recalculated_report["current_backlog"] == 1
+        assert client.get(f"/api/v1/assets/{asset_id}").json()["vulnerabilities"] == 1
+
+        # Latest scan removal falls back to the earlier observation, retaining the workflow.
+        third_id = third_status.json()["scan_id"]
+        assert client.delete(f"/api/v1/scans/{third_id}").status_code == 200
+        assert client.get(f"/api/v1/vulnerabilities/{surviving_finding}").status_code == 404
+        assert client.get(f"/api/v1/vulnerabilities/{finding_id}").json()["workflow"]["status"] == (
+            "in_progress"
+        )
+        assert client.get("/api/v1/vulnerabilities").json()["total"] == 1
+
+        # Last scan removal leaves no phantom findings, resolutions or report counts.
+        first_id = import_status.json()["scan_id"]
+        assert client.delete(f"/api/v1/scans/{first_id}").status_code == 200
+        assert client.get("/api/v1/scans").json()["total"] == 0
+        assert client.get("/api/v1/vulnerabilities").json()["total"] == 0
+        assert client.get("/api/v1/vulnerabilities/queue").json()["total"] == 0
+        empty_report = client.get("/api/v1/reports/monthly").json()["summary"]
+        for metric in ("scans", "new_findings", "resolved_findings", "reopened_findings",
+                       "current_backlog"):
+            assert empty_report[metric] == 0
+        empty_dashboard = client.get("/api/v1/dashboard/summary").json()
+        assert empty_dashboard["assets"] == 0
+        assert empty_dashboard["open_vulnerabilities"] == 0
+
+        async def read_deletion_audit():
+            async with session_factory() as session:
+                result = await session.execute(text("""
+                    SELECT count(*) FROM app.evento_auditoria
+                    WHERE acao = 'scan.deleted' AND usuario_id = :user_id
+                """), {"user_id": UUID(user_id)})
+                return result.scalar_one()
+
+        assert client.portal.call(read_deletion_audit) == 3
+
+        # The original file can be imported again; paid analyses are not lost or regenerated.
+        reimported = client.post(
+            "/api/v1/scans/import",
+            files={"file": ("ci-reimport.nessus", SAMPLE_NESSUS, "application/xml")},
+        )
+        assert reimported.status_code == 202
+        reimport_status = client.get(f"/api/v1/scans/imports/{reimported.json()['id']}").json()
+        assert reimport_status["status"] == "concluido"
+        assert reimport_status["scan_id"] != first_id
+        new_finding = client.get("/api/v1/vulnerabilities").json()["items"][0]["id"]
+        reimported_ai = client.get(f"/api/v1/vulnerabilities/{new_finding}/remediation")
+        assert reimported_ai.json()["version"] == 2
+        assert ai_calls == 2
+
         logout = client.post("/api/v1/auth/logout")
         assert logout.status_code == 204
         assert client.get("/api/v1/auth/me").status_code == 401
         assert client.get("/api/v1/reports/monthly").status_code == 401
+        assert client.delete(f"/api/v1/scans/{first_id}").status_code == 401

@@ -27,6 +27,7 @@ from app.api.dependencies import (
 from app.core.config import settings
 from app.services.nessus.importer import process_import
 from app.services.risk import NEO_SCORE_SQL
+from app.services.scan_deletion import delete_scan
 from app.services.scanners.registry import list_scanner_sources, resolve_scanner_adapter
 
 router = APIRouter()
@@ -47,6 +48,13 @@ class ScanListResponse(BaseModel):
     items: list[ScanListItem]
     total: int
     can_import: bool
+    can_delete: bool
+
+
+class ScanDeletionResponse(BaseModel):
+    id: int
+    name: str
+    deleted: bool
 
 
 class ScannerSourceResponse(BaseModel):
@@ -333,7 +341,23 @@ async def list_scans(
         items=items,
         total=len(items),
         can_import=current_user.role in SCAN_IMPORT_ROLES,
+        can_delete=current_user.role == "administrador",
     )
+
+
+@router.delete("/{scan_id}", response_model=ScanDeletionResponse)
+async def remove_scan(
+    scan_id: int, current_user: CurrentUserDep, session: SessionDep,
+) -> ScanDeletionResponse:
+    require_role(
+        current_user, frozenset({"administrador"}),
+        detail="Somente administradores podem excluir scans.",
+    )
+    result = await delete_scan(
+        session=session, client_id=current_user.client_id,
+        user_id=current_user.id, scan_id=scan_id,
+    )
+    return ScanDeletionResponse(**result)
 
 
 @router.get("/sources", response_model=list[ScannerSourceResponse])

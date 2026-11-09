@@ -151,3 +151,46 @@ test("importação inválida informa o erro sem encerrar a sessão", async ({ pa
   await expect(page).toHaveURL(/\/scan$/);
   await expect(page.getByRole("button", { name: "Importar scan", exact: true })).toBeEnabled();
 });
+
+test("exclusão de scan pede confirmação, trata falhas e persiste", async ({ page }) => {
+  const name = `DELETE-E2E-${Date.now()}`;
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto("/scan");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "delete-synthetic.nessus", mimeType: "application/xml", buffer: scan(name, "900002"),
+  });
+  await expect(page.getByRole("status")).toContainText("1 ativos e 1 vulnerabilidades importados.");
+  const row = page.getByRole("row").filter({ hasText: name });
+  const remove = page.getByRole("button", { name: `Excluir scan ${name}`, exact: true });
+  let deletes = 0;
+  page.on("request", (request) => { if (request.method() === "DELETE") deletes += 1; });
+  page.once("dialog", async (dialog) => {
+    expect(dialog.message()).toContain(name);
+    expect(dialog.message()).toContain("não pode ser desfeita");
+    await dialog.dismiss();
+  });
+  await remove.click();
+  await expect(row).toBeVisible();
+  expect(deletes).toBe(0);
+
+  const deletionRoute = /\/api\/v1\/scans\/\d+$/;
+  await page.route(deletionRoute, (route) => route.fulfill({
+    status: 409, contentType: "application/json", body: '{"detail":"Aguarde o processamento."}',
+  }));
+  page.once("dialog", (dialog) => dialog.accept());
+  await remove.click();
+  await expect(page.getByRole("alert").filter({ hasText: "Aguarde o processamento." })).toBeVisible();
+  await expect(row).toBeVisible();
+  await expect(remove).toBeEnabled();
+  await page.unroute(deletionRoute);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await remove.click();
+  await expect(page.getByRole("status")).toContainText(`Scan “${name}” excluído.`);
+  await expect(row).toHaveCount(0);
+  expect(deletes).toBe(2);
+  await page.reload();
+  await expect(page.getByRole("row").filter({ hasText: name })).toHaveCount(0);
+  await page.screenshot({ path: "test-results/scans-after-delete.png", fullPage: true });
+});

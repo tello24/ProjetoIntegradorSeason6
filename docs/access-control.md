@@ -14,6 +14,7 @@ depender de um novo login.
 | Aplicar SLA e iniciar correção | Sim | Sim | Sim | Não |
 | Aceitar formalmente um risco | Sim | Sim | Não | Não |
 | Importar scans | Sim | Não | Sim | Não |
+| Excluir scans concluídos ou com falha | Sim | Não | Não | Não |
 | Solicitar a primeira análise da IA | Sim | Não | Sim | Não |
 | Gerar nova versão de uma análise da IA | Sim | Não | Não | Não |
 | Criar ticket de vulnerabilidade | Sim | Sim | Sim | Não |

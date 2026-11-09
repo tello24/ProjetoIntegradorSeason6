@@ -16,6 +16,7 @@ export type IconName =
   | "scan"
   | "search"
   | "shield"
+  | "trash"
   | "upload"
   | "users"
   | "vulnerability";
@@ -103,6 +104,11 @@ export function Icon({ name, size = 20, ...props }: IconProps) {
       </>
     ),
     shield: <path d="M12 3 4.5 6v5.5c0 4.7 3 7.9 7.5 9.5 4.5-1.6 7.5-4.8 7.5-9.5V6L12 3Z" />,
+    trash: (
+      <>
+        <path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7" />
+      </>
+    ),
     upload: (
       <>
         <path d="M12 16V4m-4 4 4-4 4 4" />

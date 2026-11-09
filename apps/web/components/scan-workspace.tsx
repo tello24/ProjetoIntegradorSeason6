@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Icon } from "@/components/icons";
 import { PageTitle } from "@/components/page-title";
 import { browserApi, readApiError } from "@/lib/api";
+import styles from "./scan-workspace.module.css";
 
 export interface ScanItem {
   id: number;
@@ -44,10 +45,12 @@ interface ImportStatus {
 
 export function ScanWorkspace({
   canImport,
+  canDelete,
   initialScans,
   scannerSources,
 }: {
   canImport: boolean;
+  canDelete: boolean;
   initialScans: ScanItem[];
   scannerSources: ScannerSource[];
 }) {
@@ -59,6 +62,9 @@ export function ScanWorkspace({
   const [isUploading, setIsUploading] = useState(false);
   const [currentImport, setCurrentImport] = useState<ImportStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const deletionPending = useRef(false);
 
   const loadScans = useCallback(async () => {
     try {
@@ -78,12 +84,47 @@ export function ScanWorkspace({
     }
   }, [router]);
 
+  async function handleDelete(scan: ScanItem) {
+    if (!canDelete || deletionPending.current || isUploading) return;
+    if (!window.confirm(
+      `Excluir o scan “${scan.name}”?\n\n`
+      + `Serão removidas as observações deste scan (${scan.assets} ativos e `
+      + `${scan.vulnerabilities} vulnerabilidades). O dashboard e os comparativos serão recalculados `
+      + "com os scans restantes; dados antigos podem voltar a ser a referência.\n\n"
+      + "Ativos compartilhados, anotações, análises de IA e tickets serão preservados. "
+      + "Isso não corrige vulnerabilidades nem altera o Nessus.\n\n"
+      + "A exclusão não pode ser desfeita na aplicação. Guarde o arquivo original para reimportar.",
+    )) return;
+    deletionPending.current = true;
+    setDeletingId(scan.id);
+    setError(null);
+    setMessage(null);
+    try {
+      const response = await browserApi(`/scans/${scan.id}`, { method: "DELETE" });
+      if (response.status === 401) {
+        router.replace("/login");
+        return;
+      }
+      if (!response.ok) throw new Error(await readApiError(response));
+      setScans((current) => current.filter((item) => item.id !== scan.id));
+      setCurrentImport((current) => current?.scan_id === scan.id ? null : current);
+      setMessage(`Scan “${scan.name}” excluído. Indicadores recalculados com os scans restantes.`);
+      router.refresh();
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Não foi possível excluir o scan.");
+    } finally {
+      setDeletingId(null);
+      deletionPending.current = false;
+    }
+  }
+
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || !canImport) return;
 
     setIsUploading(true);
+    setMessage(null);
     setError(null);
     setCurrentImport({
       id: "pending",
@@ -155,14 +196,14 @@ export function ScanWorkspace({
               onChange={handleFile}
               ref={fileInput}
               type="file"
-              disabled={!canImport}
+              disabled={!canImport || deletingId !== null}
             />
             <Link className="button button--secondary" href="/scan/compare">
               <Icon name="report" size={17} /> Comparar scans
             </Link>
             <button
               className="button button--primary"
-              disabled={isUploading || !canImport}
+              disabled={isUploading || !canImport || deletingId !== null}
               onClick={() => fileInput.current?.click()}
               type="button"
             >
@@ -193,6 +234,7 @@ export function ScanWorkspace({
         </div>
       )}
       {error && <p className="page-error" role="alert">{error}</p>}
+      {message && <p className={styles.feedback} role="status">{message}</p>}
 
       <section className="panel table-panel">
         <div className="table-toolbar">
@@ -219,7 +261,7 @@ export function ScanWorkspace({
             <span role="columnheader">ATIVOS</span>
             <span role="columnheader">VULNERABILIDADES</span>
             <span role="columnheader">IMPORTADO EM</span>
-            <span role="columnheader">EVOLUÇÃO</span>
+            <span role="columnheader">AÇÕES</span>
           </div>
           {visibleScans.map((scan) => (
             <div className="data-table__row data-table__row--scans" key={scan.id} role="row">
@@ -229,13 +271,25 @@ export function ScanWorkspace({
               <span role="cell">{scan.assets}</span>
               <span role="cell">{scan.vulnerabilities}</span>
               <span role="cell">{formatDate(scan.imported_at)}</span>
-              <span role="cell">
+              <span className={styles.actions} role="cell">
                 {scan.status === "concluido" ? (
                   <Link className="table-action" href={`/scan/compare?current=${scan.id}`}>
                     Comparar
                   </Link>
                 ) : (
                   <span className="table-action table-action--disabled">Aguardando</span>
+                )}
+                {canDelete && (
+                  <button
+                    aria-label={`Excluir scan ${scan.name}`}
+                    className={`table-action ${styles.deleteButton}`}
+                    disabled={deletingId !== null || isUploading || !["concluido", "falhou"].includes(scan.status)}
+                    onClick={() => handleDelete(scan)}
+                    type="button"
+                  >
+                    <Icon name="trash" size={13} />
+                    {deletingId === scan.id ? "Excluindo..." : "Excluir"}
+                  </button>
                 )}
               </span>
             </div>
