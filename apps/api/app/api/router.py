@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     access,
+    ai_admin,
     assets,
     auth,
     dashboard,
@@ -16,6 +17,7 @@ api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(access.router, prefix="/access", tags=["access"])
+api_router.include_router(ai_admin.router, prefix="/admin/ai", tags=["ai administration"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(scans.router, prefix="/scans", tags=["scans"])
 api_router.include_router(assets.router, prefix="/assets", tags=["assets"])

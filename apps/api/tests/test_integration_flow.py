@@ -623,6 +623,37 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         assert regenerated.json()["previous_versions"] == 1
         assert ai_calls == 2
 
+        ai_admin = client.get("/api/v1/admin/ai/summary?days=30")
+        assert ai_admin.status_code == 200
+        assert ai_admin.headers["cache-control"] == "private, no-store"
+        assert ai_admin.json()["usage"] == {
+            "analyses": 2, "input_tokens": 1600, "output_tokens": 800,
+            "estimated_cost_usd": 0.0056,
+        }
+        assert ai_admin.json()["models"][0]["analyses"] == 2
+        assert client.get("/api/v1/admin/ai/summary?days=500").status_code == 422
+        assert client.get("/api/v1/admin/ai/summary?days=7").status_code == 200
+        assert ai_calls == 2  # The monitor does not call or regenerate anything.
+
+        async def age_first_analysis(restore=False):
+            async with session_factory() as session:
+                await session.execute(text("""
+                    UPDATE app.vulnerabilidade_analise_ia
+                    SET criado_em = CASE WHEN :restore THEN now()
+                        ELSE now() - interval '31 days' END
+                    WHERE cliente_id = :client_id AND geracao = 1
+                """), {"client_id": login.json()["user"]["client_id"], "restore": restore})
+                await session.commit()
+
+        client.portal.call(age_first_analysis)
+        assert client.get("/api/v1/admin/ai/summary?days=7").json()["usage"]["analyses"] == 1
+        assert client.get("/api/v1/admin/ai/summary?days=30").json()["usage"] == {
+            "analyses": 1, "input_tokens": 800, "output_tokens": 400,
+            "estimated_cost_usd": 0.0028,
+        }
+        assert client.get("/api/v1/admin/ai/summary?days=90").json()["usage"]["analyses"] == 2
+        client.portal.call(age_first_analysis, True)
+
         ai_history = client.get(
             f"/api/v1/vulnerabilities/{finding_id}/remediation/history"
         )
@@ -650,6 +681,31 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         assert preserved.json()["version"] == 2
         assert preserved.json()["warning"] is None
         assert preserved.json()["error_code"] is None
+
+        failure_panel = client.get("/api/v1/admin/ai/summary").json()
+        assert failure_panel["usage"]["analyses"] == 2
+        assert failure_panel["failures_unknown_cost"] == 1
+        assert failure_panel["recent_failures"][0]["error_code"] == "billing"
+        assert failure_panel["recent_failures"][0]["cost_status"] == "unknown"
+        for role in ["gestor", "analista", "visualizador"]:
+            restricted = CurrentUser(UUID(user_id), "Test", "test@example.com", 1, "CI", role)
+            app.dependency_overrides[get_current_user] = lambda u=restricted: u
+            try:
+                assert client.get("/api/v1/admin/ai/summary").status_code == 403
+            finally:
+                app.dependency_overrides.pop(get_current_user, None)
+        foreign = CurrentUser(UUID(user_id), "Foreign", "foreign@example.com", 999999,
+                              "Foreign", "administrador")
+        app.dependency_overrides[get_current_user] = lambda: foreign
+        try:
+            foreign_panel = client.get("/api/v1/admin/ai/summary").json()
+            assert foreign_panel["usage"]["analyses"] == 0
+            assert foreign_panel["models"] == []
+            assert foreign_panel["recent_failures"] == []
+            assert foreign_panel["failures"] == 0
+            assert foreign_panel["last_success_at"] is None
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
 
         second_import = client.post(
             "/api/v1/scans/import",

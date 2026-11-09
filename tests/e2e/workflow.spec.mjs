@@ -31,6 +31,66 @@ async function login(page, credentials = { email, password }) {
   await page.getByRole("button", { name: "Entrar na plataforma" }).click();
 }
 
+test("painel da IA consulta dados sem gerar análises e permite recuperar erro", async ({ page }) => {
+  const browserErrors = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  expect((await page.request.get(`${api}/admin/ai/summary`)).status()).toBe(401);
+  await page.goto("/admin/ai");
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  const generationRequests = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().includes("/remediation")) generationRequests.push(request.url());
+  });
+  await page.getByRole("navigation").getByRole("link", { name: "Administração da IA", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Administração da IA", exact: true })).toBeVisible();
+  await expect(page.getByText("IA desativada", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Consumo local da IA" })).toContainText("Custo conhecido estimado");
+  await expect(page.getByText(/A validade da chave, o saldo/)).toBeVisible();
+  await page.getByLabel("Período do consumo").selectOption("7");
+  await expect(page.getByRole("button", { name: "Atualizar dados" })).toBeEnabled();
+  await page.getByRole("button", { name: "Atualizar dados" }).click();
+  await expect(page.getByText("IA desativada", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Usar tema escuro", exact: true }).click();
+  await page.screenshot({ path: "test-results/ai-admin-dark.png", fullPage: true });
+  await page.getByRole("button", { name: "Usar tema claro", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await page.screenshot({ path: "test-results/ai-admin-light.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Atualizar dados" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: "test-results/ai-admin-mobile.png", fullPage: true });
+  await page.route(`${api}/admin/ai/summary?*`, (route) => route.fulfill({ status: 503 }));
+  await page.getByRole("button", { name: "Atualizar dados" }).click();
+  await expect(page.locator(".page-content").getByRole("alert")).toContainText("A API não conseguiu carregar");
+  await page.unroute(`${api}/admin/ai/summary?*`);
+  await page.getByRole("button", { name: "Atualizar dados" }).click();
+  await expect(page.getByText("IA desativada", { exact: true })).toBeVisible();
+  expect(generationRequests).toEqual([]);
+  expect(browserErrors).toEqual([]);
+});
+
+test("usuário sem perfil administrador não vê o menu nem acessa o painel da IA", async ({ page }) => {
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  const viewer = { email: `ai-viewer-${Date.now()}@example.com`, password: "synthetic-viewer-password" };
+  const created = await page.request.post(`${api}/access/users`, {
+    headers: { Origin: "http://localhost:3001" },
+    data: { name: "Visualizador sintético", email: viewer.email, temporary_password: viewer.password, role: "visualizador" },
+  });
+  expect(created.status()).toBe(201);
+  await page.getByRole("button", { name: "Sair da plataforma" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await login(page, viewer);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByText("Visualizador", { exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Administração da IA", exact: true })).toHaveCount(0);
+  expect((await page.request.get(`${api}/admin/ai/summary`)).status()).toBe(403);
+  await page.goto("/admin/ai");
+  await expect(page).toHaveURL(/\/dashboard$/);
+});
+
 test.beforeAll(async ({ request }) => {
   const ready = await request.get(`${api}/health/ready`);
   expect(ready.ok(), "Inicie o ambiente isolado com npm run test:e2e:up").toBeTruthy();

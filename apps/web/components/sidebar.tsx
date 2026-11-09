@@ -102,7 +102,10 @@ export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
           {[
             ...mainItems,
             ...(user?.role === "administrador"
-              ? [{ label: "Acessos", href: "/access", icon: "users" as IconName }]
+              ? [
+                  { label: "Acessos", href: "/access", icon: "users" as IconName },
+                  { label: "Administração da IA", href: "/admin/ai", icon: "brain" as IconName },
+                ]
               : []),
           ].map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);

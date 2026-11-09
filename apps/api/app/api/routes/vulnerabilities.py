@@ -19,6 +19,7 @@ from app.api.dependencies import (
     require_role,
 )
 from app.core.config import settings
+from app.services.ai_monitoring import record_ai_failure
 from app.services.remediation import (
     RemediationContext,
     RemediationDraft,
@@ -1025,6 +1026,12 @@ async def _generate_or_reuse_remediation(
         configuration_error="disabled" if settings.ai_provider == "disabled" else "missing_key",
     )
     if generated.source == "scanner_template":
+        await record_ai_failure(
+            session=session, client_id=current_user.client_id, user_id=current_user.id,
+            workflow_id=workflow_id, provider=settings.ai_provider,
+            error_code=generated.error_code, regenerate=regenerate,
+        )
+        await session.commit()
         if saved is not None:
             return saved.model_copy(
                 update={

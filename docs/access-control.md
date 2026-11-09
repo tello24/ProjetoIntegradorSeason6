@@ -17,6 +17,7 @@ depender de um novo login.
 | Excluir scans concluídos ou com falha | Sim | Não | Não | Não |
 | Solicitar a primeira análise da IA | Sim | Não | Sim | Não |
 | Gerar nova versão de uma análise da IA | Sim | Não | Não | Não |
+| Consultar configuração, consumo e falhas da IA | Sim | Não | Não | Não |
 | Criar ticket de vulnerabilidade | Sim | Sim | Sim | Não |
 | Cadastrar, desativar ou alterar perfis | Sim | Não | Não | Não |
 

@@ -119,6 +119,39 @@ provedor, mesmo sem produzir uma análise salva no histórico local.
 
 ## Diagnóstico de falhas em uma instalação clonada
 
+### Painel administrativo local
+
+Administradores podem abrir **Administração da IA** (`/admin/ai`). A página consulta apenas
+`GET /api/v1/admin/ai/summary?days=30`, com períodos permitidos de 7, 30 ou 90 dias corridos.
+Não testa a chave, não consulta saldo/fatura, não gera conteúdo e não altera configurações.
+A API exige autenticação e papel administrador; métricas e eventos são filtrados pelo cliente
+da sessão e a resposta usa `Cache-Control: private, no-store`.
+
+A configuração exibida é a carregada pela API, não uma leitura do `.env` do navegador.
+Somente a presença da chave/workspace é informada; seus valores nunca são enviados.
+“Configurada” não significa que a conexão ou o faturamento funcionem.
+
+O total de análises/tokens/custo inclui **todas as versões salvas** no intervalo, não apenas
+as ativas. O agrupamento usa o provedor e modelo registrados na geração. Custos históricos
+não são recalculados com as tarifas atuais. A última análise salva considera todo o histórico.
+Os limites do intervalo são calculados em UTC na API; datas da tela usam `America/Sao_Paulo`.
+O total monetário usa USD e até oito casas decimais para não ocultar pequenos consumos.
+
+Tentativas que retornam plano-base passam a registrar `ai_analysis.failed` na auditoria,
+com provedor, código permitido, indicador de regeneração e situação de custo. Não se salva
+prompt, chave, resposta bruta nem texto de exceção. Bloqueios `disabled`/`missing_key` são
+marcados como sem chamada externa; demais falhas têm **custo desconhecido**, nunca zero
+inferido. Uma regeneração falha mantém intacta a análise anterior. Reutilizar uma análise
+salva não cria evento de falha nem uma nova geração.
+
+Mostramos até 20 falhas mais recentes e a contagem total no período. Esse registro começa
+com esta versão: não reconstrói logs antigos nem garante captura de interrupções abruptas
+do processo ou de falhas de gravação no banco. Ausência de registros não prova saúde do provedor.
+O monitor não mede cache hits, não calcula economia, não concilia cobranças e não impõe orçamento.
+Uso externo à instalação e tentativas com custo desconhecido podem constar na fatura oficial.
+
+### Configuração de um clone
+
 O Git não inclui `.env`, chave, créditos ou o banco de outro computador. Alterar somente
 `.env.example` não configura a instalação. Crie/preencha `.env` e recrie a API; execute
 `npm run doctor` para conferir as variáveis sem mostrar segredos ou fazer chamadas pagas.

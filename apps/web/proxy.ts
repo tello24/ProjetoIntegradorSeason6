@@ -7,6 +7,7 @@ const protectedRoutes = [
   "/vulnerabilities",
   "/remediation",
   "/access",
+  "/admin",
   "/reports",
 ];
 
@@ -36,6 +37,7 @@ export const config = {
     "/vulnerabilities/:path*",
     "/remediation/:path*",
     "/access/:path*",
+    "/admin/:path*",
     "/reports/:path*",
     "/login",
   ],
