@@ -46,7 +46,9 @@ jobs:
           cache: pip
           cache-dependency-path: apps/api/pyproject.toml
       - name: Install API dependencies
-        run: python -m pip install -e "apps/api[dev]"
+        run: |
+          python -m pip install --upgrade "pip==26.3"
+          python -m pip install -e "apps/api[dev]"
       - name: Apply database migrations
         env:
           PGPASSWORD: neoguardian-ci-only
@@ -69,6 +71,8 @@ jobs:
           cache: npm
       - name: Install web dependencies
         run: npm ci
+      - name: Audit production web dependencies
+        run: npm audit --omit=dev
       - name: Lint web
         run: npm run lint
       - name: Test local setup and diagnostics

@@ -46,16 +46,24 @@ O trabalho visual dessa branch é preservado; não se aplica automaticamente ao 
 - Não consulta saldo nem validade da chave, não chama provedores e não altera o `.env`.
 - Limite de orçamento, bloqueio automático de gastos e conciliação com faturas não incluídos.
 
-### Próxima prioridade proposta: dependências
+### Dependências — revisão realizada em 09/11/2026
 
-O `npm audit` da árvore instalada apontou nove dependências vulneráveis (oito classificadas
-como altas e uma crítica), já presentes antes deste lote. A crítica está associada ao
-Next.js 16.3.3. Isso é um alerta de dependência, não evidência de exploração da aplicação.
+- Next.js e configuração do ESLint atualizados para 16.4.5, com lockfile atualizado.
+- PyJWT atualizado para 2.15.1; pytest, certifi e pip também corrigidos nos ambientes pertinentes.
+- Cinco testes adicionais de rejeição de sessões inválidas após a atualização do JWT.
+- Auditorias sem alertas conhecidos nas dependências npm de produção, no ambiente Python
+  local verificado e nas dependências Python da imagem Docker reconstruída.
+- Oito pacotes de desenvolvimento ainda sinalizados pelo npm por uma mesma cadeia do
+  minimatch; não foi aplicado downgrade forçado nem override de versão principal.
+- Build, lint, 95 testes de API, 37 testes de ferramentas, dez testes de navegador e
+  restauração PostgreSQL com dados fictícios aprovados localmente.
+- CI preparada para bloquear alertas nas dependências npm de produção; execução remota
+  depende da publicação. Relatório e limitações em [revisão de segurança](security-review.md).
 
-Antes de publicar na internet, revisar os avisos dos mantenedores, atualizar versões
-compatíveis em uma mudança separada e repetir build, lint e testes. Não executar
-`npm audit fix --force`: a sugestão automática inclui mudanças incompatíveis na configuração
-do ESLint. As contagens mudam com os avisos publicados; repetir a auditoria na atualização.
+**Pendências:** acompanhar a correção do minimatch nas ferramentas de desenvolvimento,
+adotar travamento completo das dependências Python e repetir as auditorias nas atualizações.
+O repositório pode ser público por decisão do grupo; isso não autoriza publicar dados reais,
+credenciais ou expor o ambiente de desenvolvimento na internet.
 
 ## Asset 360 — ficha técnica completa do ativo
 

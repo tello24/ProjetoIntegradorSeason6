@@ -187,3 +187,12 @@ A API de teste usa a porta 8001 e o frontend de teste, 3001. Não reutilize essa
 para outros serviços durante a execução. O banco temporário perde os dados de teste
 ao ser parado; os dados da aplicação normal não são afetados. Consulte
 [o protocolo de testes](docs/browser-tests.md) para os cenários, limites e relatórios.
+
+## Revisão das dependências
+
+A revisão de 09/11/2026 atualizou Next.js, PyJWT e ferramentas auxiliares. O relatório
+registra os testes executados, as auditorias sem alertas nas dependências de produção
+verificadas e os alertas moderados ainda presentes nas ferramentas de desenvolvimento.
+Consulte [a revisão de segurança e suas limitações](docs/security-review.md).
+O código público não deve conter `.env`, backups ou scans reais. Um repositório público
+não equivale a uma aplicação pronta para ser exposta na internet.
