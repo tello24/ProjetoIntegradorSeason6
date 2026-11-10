@@ -609,9 +609,15 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         assert "Apply the synthetic test fix." in remediation.json()["steps"]
         assert ai_calls == 1
 
-        cached_remediation = client.post(f"/api/v1/vulnerabilities/{finding_id}/remediation")
+        with monkeypatch.context() as updated_configuration:
+            updated_configuration.setattr(settings, "ai_prompt_version", "ci-v2-concise")
+            updated_configuration.setattr(settings, "ai_max_output_tokens", 4096)
+            cached_remediation = client.post(f"/api/v1/vulnerabilities/{finding_id}/remediation")
         assert cached_remediation.status_code == 200
         assert cached_remediation.json()["cached"] is True
+        assert cached_remediation.json()["stale"] is True
+        assert cached_remediation.json()["prompt_version"] == "ci-v1"
+        assert cached_remediation.json()["estimated_cost_usd"] == 0.0028
         assert cached_remediation.json()["version"] == 1
         assert ai_calls == 1
 

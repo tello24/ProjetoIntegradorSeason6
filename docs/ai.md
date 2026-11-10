@@ -108,6 +108,30 @@ Atualize essas variáveis quando necessário para manter a estimativa registrada
 
 ## Versionamento e custos
 
+### Respostas interrompidas pelo limite de saída
+
+O padrão desde 09/11/2026 é `AI_MAX_OUTPUT_TOKENS=4096`. Esse valor é o teto por
+requisição, não uma meta de consumo nem um orçamento mensal. O custo estimado das
+análises salvas continua usando o consumo informado pelo provedor, não esse teto.
+Respostas efetivamente maiores podem custar mais; 4096 não garante que todo pedido caiba.
+
+O prompt `2026-11-09-v1` pede respostas objetivas, com meta de até 650 palavras nos
+valores do JSON, limites sugeridos por seção e agrupamento de ações comuns a várias CVEs.
+Essas orientações não removem verificações, cautelas, rollback ou validação técnica.
+Não são limites de tokens impostos pelo modelo nem garantia de tamanho da resposta.
+
+Em instalações existentes, atualizar **somente** `AI_MAX_OUTPUT_TOKENS` e
+`AI_PROMPT_VERSION` no `.env` local; editar `.env.example` ou executar `git pull`
+não substitui o `.env`. Recriar a API no mesmo projeto Compose carrega a configuração.
+Não é necessário apagar o banco ou as análises existentes. A mudança de versão pode
+marcar uma análise como antiga, mas ela continua sendo reutilizada sem regeneração
+automática. Uma nova versão permanece sujeita à autorização explícita do administrador.
+
+Se o Claude retornar `stop_reason=max_tokens`, a resposta continua sendo rejeitada,
+mesmo que o trecho recebido tenha JSON válido. O sistema mantém o plano-base ou a
+análise anterior, registra a falha e não repete a chamada automaticamente. A tentativa
+pode ser cobrada pelo provedor. Depois do ajuste, uma nova tentativa deve ser manual.
+
 `AI_PROMPT_VERSION` identifica a regra usada para produzir a resposta. Sempre que o conteúdo do
 prompt mudar em produção, altere essa versão. A assinatura dos dados de entrada permite avisar
 quando o scanner trouxe informações mais recentes sem gerar automaticamente outra cobrança.

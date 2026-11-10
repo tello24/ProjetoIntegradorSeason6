@@ -64,8 +64,8 @@ class Settings(BaseSettings):
     app_public_url: str = "http://localhost:3000"
     ai_provider: AIProvider = "disabled"
     ai_timeout_seconds: int = Field(default=45, ge=5, le=120)
-    ai_max_output_tokens: int = Field(default=2200, ge=500, le=8192)
-    ai_prompt_version: str = Field(default="2026-09-04-v2", min_length=1, max_length=80)
+    ai_max_output_tokens: int = Field(default=4096, ge=500, le=8192)
+    ai_prompt_version: str = Field(default="2026-11-09-v1", min_length=1, max_length=80)
 
     anthropic_api_key: str | None = None
     anthropic_workspace_id: str | None = None

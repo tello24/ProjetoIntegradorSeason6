@@ -598,7 +598,18 @@ def _system_prompt() -> str:
         "precedido por "
         "verificações. Não proponha exploração, evasão, persistência nem ações destrutivas. Inclua "
         "pré-requisitos, rollback seguro e validação por teste funcional e novo scan autenticado. "
-        "Não afirme que uma correção foi executada ou que o risco foi eliminado."
+        "Não afirme que uma correção foi executada ou que o risco foi eliminado. "
+        "CONCISÃO: busque até 650 palavras no conjunto dos valores textuais do JSON, sem "
+        "introdução ou texto fora dele. Prefira why_it_matters com até 70 palavras, summary "
+        "com até 50, priority_rationale com até 40 e estimated_effort com até 20. "
+        "Prefira até 3 itens em prerequisites, validation_steps, rollback_plan e cautions; "
+        "até 6 em steps e até 4 em assumptions. Use itens curtos, preferencialmente com até "
+        "25 palavras. Não preencha listas até o máximo nem repita o mesmo conteúdo entre "
+        "seções. Agrupe CVEs que tenham a mesma ação corretiva; não reproduza a descrição "
+        "inteira do scanner nem explique cada CVE separadamente sem necessidade. "
+        "Essas são metas de concisão, não autorização para omitir verificações, condições, "
+        "incertezas, cautelas ou etapas essenciais de segurança. Se faltar informação, "
+        "registre o que deve ser confirmado antes da mudança, sem inventar detalhes."
     )
 
 
