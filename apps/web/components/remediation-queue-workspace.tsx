@@ -270,7 +270,7 @@ export function RemediationQueueWorkspace() {
   return (
     <div className="page-content">
       <PageTitle
-        eyebrow="OPERAÇÃO DE SEGURANÇA"
+        eyebrow="Operação de segurança"
         title="Fila de remediação"
         description="O que precisa de ação agora, ordenado por prazo, recorrência e WVM Score."
       />

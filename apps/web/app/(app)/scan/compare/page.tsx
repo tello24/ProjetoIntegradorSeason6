@@ -106,7 +106,7 @@ export default async function ScanComparePage({ searchParams }: ComparePageProps
     return (
       <div className="page-content">
         <PageTitle
-          eyebrow="SCANS / EVOLUÇÃO"
+          eyebrow="Scans / evolução"
           title="Comparador de scans"
           description="Descubra exatamente o que entrou, permaneceu, voltou ou foi corrigido."
           action={<BackToScans />}
@@ -156,7 +156,7 @@ export default async function ScanComparePage({ searchParams }: ComparePageProps
   return (
     <div className={`page-content ${styles.comparisonPage}`}>
       <PageTitle
-        eyebrow="SCANS / EVOLUÇÃO"
+        eyebrow="Scans / evolução"
         title="Comparador de scans"
         description="Descubra exatamente o que entrou, permaneceu, voltou ou foi corrigido."
         action={<BackToScans />}
@@ -194,7 +194,7 @@ export default async function ScanComparePage({ searchParams }: ComparePageProps
           current
           date={comparison.current_imported_at}
           findings={comparison.current_findings}
-          label="SCAN ATUAL"
+          label="Scan atual"
           name={comparison.current_scan_name}
           score={comparison.current_risk_score}
         />

@@ -13,11 +13,8 @@
   gap: 8px;
   padding: 16px;
   border: 1px solid var(--border);
-  border-top: 2px solid var(--role-tone);
-  border-radius: var(--radius);
-  background:
-    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--role-tone) 9%, transparent), transparent 46%),
-    var(--surface-panel);
+  border-radius: 6px;
+  background: var(--surface-panel);
 }
 
 .roleCard > span,
@@ -46,10 +43,12 @@
   line-height: 1.55;
 }
 
-.role_administrador { --role-tone: var(--brand-orange-light); }
-.role_gestor { --role-tone: var(--yellow); }
-.role_analista { --role-tone: var(--green); }
-.role_visualizador { --role-tone: var(--text-dim); }
+.role_administrador,
+.role_gestor,
+.role_analista,
+.role_visualizador {
+  --role-tone: var(--text-dim);
+}
 
 .createPanel,
 .userPanel {
@@ -63,9 +62,7 @@
 .createPanel {
   padding: 18px;
   border-color: rgba(255, 109, 2, 0.3);
-  background:
-    linear-gradient(120deg, rgba(255, 109, 2, 0.08), transparent 42%),
-    var(--surface-panel);
+  background: var(--surface-panel);
 }
 
 .formHeading,

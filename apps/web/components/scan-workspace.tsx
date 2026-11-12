@@ -144,7 +144,7 @@ export function ScanWorkspace({
   return (
     <div className="page-content">
       <PageTitle
-        eyebrow="COLETA E HISTÓRICO"
+        eyebrow="Coleta e histórico"
         title="Scans"
         description="Importe e acompanhe os resultados dos scanners de vulnerabilidade."
         action={

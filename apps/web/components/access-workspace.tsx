@@ -164,7 +164,7 @@ export function AccessWorkspace() {
   return (
     <div className="page-content">
       <PageTitle
-        eyebrow="ADMINISTRAÇÃO"
+        eyebrow="Administração"
         title="Controle de acessos"
         description="Defina quem administra, coordena, executa ou apenas consulta o ambiente."
         action={

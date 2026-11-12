@@ -171,7 +171,7 @@ export function DashboardWorkspace({ initialSummary }: { initialSummary: Dashboa
   return (
     <div className={`page-content ${isLoading ? styles.loading : ""}`} aria-busy={isLoading}>
       <PageTitle
-        eyebrow="PANORAMA DO AMBIENTE"
+        eyebrow="Panorama do ambiente"
         title="Dashboard"
         description={
           mode === "executive"
@@ -285,6 +285,7 @@ function ExecutiveDashboard({ summary }: { summary: DashboardSummary }) {
     <>
       <section className="metrics-grid" aria-label="Indicadores executivos">
         <MetricCard
+          featured
           helper="Métrica consolidada do ambiente filtrado"
           icon={<Icon name="shield" size={19} />}
           info={
@@ -298,28 +299,28 @@ function ExecutiveDashboard({ summary }: { summary: DashboardSummary }) {
             </>
           }
           infoLabel="Como a pontuação de risco funciona"
-          label="PONTUAÇÃO DE RISCO"
+          label="Pontuação de risco"
           tone="cyan"
           value={summary.risk_score}
         />
         <MetricCard
           helper="Achados presentes nos scans mais recentes"
           icon={<Icon name="vulnerability" size={19} />}
-          label="VULNERABILIDADES ABERTAS"
+          label="Vulnerabilidades abertas"
           tone="red"
           value={summary.open_vulnerabilities}
         />
         <MetricCard
           helper="WVM Score 80 ou superior"
-          icon={<Icon name="shield" size={19} />}
-          label="AGIR AGORA"
+          icon={<Icon name="bolt" size={19} />}
+          label="Agir agora"
           tone="red"
           value={summary.urgent_findings}
         />
         <MetricCard
           helper="Ativos presentes nos escopos selecionados"
           icon={<Icon name="assets" size={19} />}
-          label="ATIVOS MONITORADOS"
+          label="Ativos monitorados"
           tone="blue"
           value={summary.assets}
         />
@@ -404,28 +405,28 @@ function OperationalDashboard({
         <MetricCard
           helper="Itens nas etapas ativas da operação"
           icon={<Icon name="queue" size={19} />}
-          label="BACKLOG OPERACIONAL"
+          label="Backlog operacional"
           tone="cyan"
           value={activeBacklog}
         />
         <MetricCard
           helper="Prazo manual ou SLA automático vencido"
           icon={<Icon name="calendar" size={19} />}
-          label="EM ATRASO"
+          label="Em atraso"
           tone="red"
           value={summary.workflow.overdue}
         />
         <MetricCard
           helper="Tarefas que ainda precisam de um dono"
           icon={<Icon name="users" size={19} />}
-          label="SEM RESPONSÁVEL"
+          label="Sem responsável"
           tone="red"
           value={summary.workflow.unassigned}
         />
         <MetricCard
           helper="Correções confirmadas por scan nos últimos 30 dias"
           icon={<Icon name="shield" size={19} />}
-          label="RESOLVIDAS EM 30 DIAS"
+          label="Resolvidas em 30 dias"
           tone="green"
           value={summary.workflow.resolved_last_30_days}
         />
@@ -545,7 +546,7 @@ function ReliabilityPanel({ reliability }: { reliability: DataReliability }) {
         <div className={styles.reliabilityMetrics}>
           <ReliabilityMetric
             detail={reliability.last_scan_name ?? "Importe o primeiro scan"}
-            label="ÚLTIMA ATUALIZAÇÃO"
+            label="Última atualização"
             tone={reliability.last_scan_age_days != null && reliability.last_scan_age_days > 30
               ? "danger"
               : "default"}
@@ -553,20 +554,20 @@ function ReliabilityPanel({ reliability }: { reliability: DataReliability }) {
           />
           <ReliabilityMetric
             detail={`${reliability.credentialed_assets} de ${reliability.current_assets} ativos`}
-            label="ATIVOS COM SCAN CREDENCIADO"
+            label="Ativos com scan credenciado"
             progress={reliability.credentialed_percentage}
             tone={reliability.credentialed_percentage < 50 ? "danger" : "good"}
             value={`${reliability.credentialed_percentage.toFixed(1)}%`}
           />
           <ReliabilityMetric
             detail={`${reliability.total_scopes} escopos monitorados`}
-            label="ESCOPOS DESATUALIZADOS"
+            label="Escopos desatualizados"
             tone={reliability.stale_scopes > 0 ? "danger" : "good"}
             value={reliability.stale_scopes}
           />
           <ReliabilityMetric
             detail={`${reliability.completed_scans} scans concluídos no histórico`}
-            label="FALHAS EM 30 DIAS"
+            label="Falhas em 30 dias"
             tone={reliability.failed_imports_last_30_days > 0 ? "danger" : "good"}
             value={reliability.failed_imports_last_30_days}
           />

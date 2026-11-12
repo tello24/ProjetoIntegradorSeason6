@@ -122,7 +122,7 @@ export function AssetWorkspace({ initialData }: AssetWorkspaceProps) {
   return (
     <div className="page-content">
       <PageTitle
-        eyebrow="SUPERFÍCIE MONITORADA"
+        eyebrow="Superfície monitorada"
         title="Inventário de ativos"
         description={`${initialData.summary.total} ${initialData.summary.total === 1 ? "ativo identificado" : "ativos identificados"} nos scans atuais.`}
         action={
@@ -136,28 +136,28 @@ export function AssetWorkspace({ initialData }: AssetWorkspaceProps) {
         <MetricCard
           helper="Presentes nos escopos mais recentes"
           icon={<Icon name="assets" size={19} />}
-          label="ATIVOS MONITORADOS"
+          label="Ativos monitorados"
           tone="cyan"
           value={initialData.summary.total}
         />
         <MetricCard
           helper="Com ao menos um achado crítico"
           icon={<Icon name="vulnerability" size={19} />}
-          label="EXPOSIÇÃO CRÍTICA"
+          label="Exposição crítica"
           tone="red"
           value={initialData.summary.critical_exposure}
         />
         <MetricCard
           helper={`${initialData.summary.credentialed} de ${initialData.summary.total} ativos`}
           icon={<Icon name="shield" size={19} />}
-          label="COBERTURA CREDENCIADA"
+          label="Cobertura credenciada"
           tone="green"
           value={`${credentialCoverage}%`}
         />
         <MetricCard
           helper="Maior WVM Score ativo encontrado"
           icon={<Icon name="shield" size={19} />}
-          label="MAIOR RISCO"
+          label="Maior risco"
           tone="blue"
           value={highestRisk}
         />
@@ -166,19 +166,19 @@ export function AssetWorkspace({ initialData }: AssetWorkspaceProps) {
       <section className={styles.contextSignals} aria-label="Sinais de contexto do negócio">
         <ContextSignal
           helper={`${initialData.summary.critical_business_assets} ativos classificados como críticos`}
-          label="CRÍTICOS COM EXPOSIÇÃO"
+          label="Críticos com exposição"
           tone="danger"
           value={initialData.summary.critical_business_exposure}
         />
         <ContextSignal
           helper="Produção com visibilidade técnica limitada"
-          label="PRODUÇÃO SEM CREDENCIAL"
+          label="Produção sem credencial"
           tone="warning"
           value={initialData.summary.production_uncredentialed}
         />
         <ContextSignal
           helper="Precisam de definição de ownership"
-          label="ATIVOS SEM RESPONSÁVEL"
+          label="Ativos sem responsável"
           value={initialData.summary.without_owner}
         />
       </section>
@@ -251,14 +251,14 @@ export function AssetWorkspace({ initialData }: AssetWorkspaceProps) {
         <div className={styles.tableScroll}>
           <div className={styles.table} role="table" aria-label="Inventário de ativos">
             <div className={styles.tableHeader} role="row">
-              <span role="columnheader">ATIVO</span>
-              <span role="columnheader">SISTEMA</span>
-              <span role="columnheader">NEGÓCIO</span>
-              <span role="columnheader">COBERTURA</span>
-              <span role="columnheader">VULNS</span>
-              <span role="columnheader">CRÍTICAS / ALTAS</span>
-              <span role="columnheader">RISCO</span>
-              <span role="columnheader">ÚLTIMA VISÃO</span>
+              <span role="columnheader">Ativo</span>
+              <span role="columnheader">Sistema</span>
+              <span role="columnheader">Negócio</span>
+              <span role="columnheader">Cobertura</span>
+              <span role="columnheader">Vulnerabilidades</span>
+              <span role="columnheader">Críticas / altas</span>
+              <span role="columnheader">Risco</span>
+              <span role="columnheader">Última leitura</span>
             </div>
             {filteredItems.map((item) => (
               <Link

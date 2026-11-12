@@ -6,6 +6,7 @@ type ThemePreference = "system" | "light" | "dark";
 
 const storageKey = "wvm-theme";
 const themeEvent = "wvm-theme-change";
+const themeChangeAudios = new Set<HTMLAudioElement>();
 
 const options: Array<{ value: ThemePreference; label: string; symbol: string }> = [
   { value: "system", label: "Automático", symbol: "A" },
@@ -26,6 +27,22 @@ function resolveTheme(preference: ThemePreference) {
 function applyPreference(preference: ThemePreference) {
   document.documentElement.dataset.theme = resolveTheme(preference);
   document.documentElement.style.colorScheme = resolveTheme(preference);
+}
+
+function playThemeChangeSound() {
+  const audio = new Audio("/sounds/theme-toggle-reference.wav");
+  audio.volume = 0.7;
+  themeChangeAudios.add(audio);
+  audio.onended = () => themeChangeAudios.delete(audio);
+  audio.onerror = () => {
+    themeChangeAudios.delete(audio);
+    console.error("Não foi possível carregar o som de troca de tema.");
+  };
+
+  void audio.play().catch((error: unknown) => {
+    themeChangeAudios.delete(audio);
+    console.error("Não foi possível reproduzir o som de troca de tema.", error);
+  });
 }
 
 function subscribe(callback: () => void) {
@@ -58,9 +75,13 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const preference = useSyncExternalStore(subscribe, getPreference, () => "system");
 
   function selectTheme(nextPreference: ThemePreference) {
+    const currentTheme = document.documentElement.dataset.theme;
+    const nextTheme = resolveTheme(nextPreference);
+
     if (nextPreference === "system") window.localStorage.removeItem(storageKey);
     else window.localStorage.setItem(storageKey, nextPreference);
     applyPreference(nextPreference);
+    if (currentTheme !== nextTheme) playThemeChangeSound();
     window.dispatchEvent(new Event(themeEvent));
   }
 

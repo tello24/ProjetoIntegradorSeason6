@@ -37,7 +37,12 @@ const roleLabels: Record<UserRole, string> = {
   visualizador: "Visualizador",
 };
 
-export function Sidebar() {
+interface SidebarProps {
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -75,58 +80,70 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar__brand">
-        <Brand />
-        <span className="sidebar__edition">BY NEOGUARDIAN</span>
-      </div>
-
-      <nav className="sidebar__nav" aria-label="Navegação principal">
-        <p className="sidebar__label">VISÃO GERAL</p>
-        {[
-          ...mainItems,
-          ...(user?.role === "administrador"
-            ? [{ label: "Acessos", href: "/access", icon: "users" as IconName }]
-            : []),
-        ].map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link
-              className={`sidebar__item${isActive ? " sidebar__item--active" : ""}`}
-              href={item.href}
-              key={item.href}
-            >
-              <Icon name={item.icon} size={18} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="sidebar__appearance">
-        <div className="sidebar__appearance-copy">
-          <span>APARÊNCIA</span>
-          <small>Preferência visual</small>
+    <aside className={`sidebar${isExpanded ? "" : " sidebar--collapsed"}`}>
+        <div className="sidebar__brand">
+          <Brand />
+          <span className="sidebar__edition">BY NEOGUARDIAN</span>
         </div>
-        <ThemeToggle compact />
-      </div>
 
-      <div className="sidebar__footer">
-        <div className="avatar">{user?.name.slice(0, 1).toLocaleUpperCase("pt-BR") ?? "W"}</div>
-        <div className="sidebar__user">
-          <strong>{user?.name ?? "Carregando perfil"}</strong>
-          <span>{user ? roleLabels[user.role] : "Ambiente seguro"}</span>
+        <div className="sidebar__nav-control">
+          <p className="sidebar__label">Visão geral</p>
+          <button
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Recolher navegação" : "Expandir navegação"}
+            className="sidebar__toggle"
+            onClick={onToggle}
+            type="button"
+          >
+            <Icon name={isExpanded ? "chevronLeft" : "chevronRight"} size={18} />
+          </button>
         </div>
-        <button
-          aria-label="Sair da plataforma"
-          className="sidebar__logout"
-          disabled={isLoggingOut}
-          onClick={handleLogout}
-          type="button"
-        >
-          <Icon name="logout" size={17} />
-        </button>
-      </div>
+        <nav className="sidebar__nav" aria-label="Navegação principal">
+          {[
+            ...mainItems,
+            ...(user?.role === "administrador"
+              ? [{ label: "Acessos", href: "/access", icon: "users" as IconName }]
+              : []),
+          ].map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                aria-label={item.label}
+                className={`sidebar__item${isActive ? " sidebar__item--active" : ""}`}
+                href={item.href}
+                key={item.href}
+              >
+                <Icon name={item.icon} size={18} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="sidebar__appearance">
+          <div className="sidebar__appearance-copy">
+            <span>Aparência</span>
+            <small>Preferência visual</small>
+          </div>
+          <ThemeToggle compact />
+        </div>
+
+        <div className="sidebar__footer">
+          <div className="avatar">{user?.name.slice(0, 1).toLocaleUpperCase("pt-BR") ?? "W"}</div>
+          <div className="sidebar__user">
+            <strong>{user?.name ?? "Carregando perfil"}</strong>
+            <span>{user ? roleLabels[user.role] : "Ambiente seguro"}</span>
+          </div>
+          <button
+            aria-label="Sair da plataforma"
+            className="sidebar__logout"
+            disabled={isLoggingOut}
+            onClick={handleLogout}
+            type="button"
+          >
+            <Icon name="logout" size={17} />
+          </button>
+        </div>
     </aside>
   );
 }

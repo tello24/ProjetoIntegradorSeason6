@@ -24,7 +24,7 @@
 }
 
 .item strong {
-  color: var(--tone);
+  color: var(--text-strong);
   font-family: var(--font-sans);
   font-size: 27px;
   line-height: 1;
@@ -55,7 +55,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--divider);
-  background: rgba(255, 109, 2, 0.018);
+  background: transparent;
 }
 
 .effectivenessItem {
