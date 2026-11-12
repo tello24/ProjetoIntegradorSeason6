@@ -71,7 +71,90 @@ test("painel da IA consulta dados sem gerar análises e permite recuperar erro",
   expect(browserErrors).toEqual([]);
 });
 
-test("usuário sem perfil administrador não vê o menu nem acessa o painel da IA", async ({ page }) => {
+test("consumo por pessoa mostra ranking, detalhes, paginação e falhas sem gerar IA", async ({ page }) => {
+  const errors = [];
+  const generationRequests = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().includes("/remediation")) generationRequests.push(request.url());
+  });
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  const user = "00000000-0000-4000-8000-000000000001";
+  let snapshot;
+  await page.route(`${api}/admin/ai/summary?*`, async (route) => {
+    const response = await route.fetch();
+    const summary = await response.json();
+    snapshot = summary.as_of;
+    await route.fulfill({ json: { ...summary,
+      usage: { analyses: 22, input_tokens: 6600, output_tokens: 3300, estimated_cost_usd: 0.033 },
+      last_success_at: snapshot, failures: 1, failures_unknown_cost: 1, configuration_blocks: 0,
+      models: [{ provider: "anthropic", model: "synthetic-model", analyses: 22,
+        input_tokens: 6600, output_tokens: 3300, estimated_cost_usd: 0.033 }],
+      recent_failures: [{ id: 1, occurred_at: snapshot, provider: "anthropic", error_code: "timeout",
+        guidance: "Tentativa sintética interrompida. Confira a configuração antes de tentar novamente.", cost_status: "unknown" }],
+      users: [
+        { user_id: user, name: "Ana Exemplo", active: true, analyses: 22, vulnerabilities: 21,
+          input_tokens: 6600, output_tokens: 3300, estimated_cost_usd: 0.033, failures_unknown_cost: 0, configuration_blocks: 0 },
+        { user_id: null, name: "Autoria não registrada", active: false, analyses: 0, vulnerabilities: 0,
+          input_tokens: 0, output_tokens: 0, estimated_cost_usd: 0, failures_unknown_cost: 1, configuration_blocks: 0 },
+      ],
+    } });
+  });
+  let failNext = false;
+  await page.route(`${api}/admin/ai/users/*/vulnerabilities?*`, async (route) => {
+    const url = new URL(route.request().url());
+    expect(url.searchParams.get("as_of")).toBe(snapshot);
+    if (failNext) { failNext = false; await route.fulfill({ status: 503 }); return; }
+    const currentPage = Number(url.searchParams.get("page"));
+    const missing = url.pathname.includes("unattributed");
+    const items = Array.from({ length: missing ? 0 : currentPage === 1 ? 20 : 1 }, (_, i) => {
+      const index = (currentPage - 1) * 20 + i;
+      return { workflow_id: `synthetic-${index}`, finding_id: index === 0 ? 42 : null,
+        title: `Vulnerabilidade sintética ${index + 1}`, plugin_id: 900000 + index,
+        asset: "192.0.2.10", protocol: "tcp", port: 443, analyses: index === 0 ? 2 : 1,
+        input_tokens: index === 0 ? 600 : 300, output_tokens: index === 0 ? 300 : 150,
+        estimated_cost_usd: index === 0 ? 0.003 : 0.0015, last_generated_at: snapshot };
+    });
+    await route.fulfill({ json: { items, page: currentPage, page_size: 20, total: missing ? 0 : 21 } });
+  });
+  await page.goto("/admin/ai");
+  const ranking = page.getByRole("table", { name: "Consumo por pessoa", exact: true });
+  await expect(ranking.getByRole("row").nth(1)).toContainText("Ana Exemplo");
+  await expect(ranking).toContainText("9.900");
+  await expect(ranking).toContainText("0,033000");
+  await expect(ranking).toContainText("tentativa(s) com custo desconhecido");
+  await page.getByRole("button", { name: "Ver vulnerabilidades de Ana Exemplo" }).click();
+  const details = page.getByRole("table", { name: "Vulnerabilidades de Ana Exemplo", exact: true });
+  await expect(details.getByRole("link", { name: "Vulnerabilidade sintética 1", exact: true })).toHaveAttribute("href", "/vulnerabilities/42");
+  await expect(details).toContainText("histórico de consumo preservado");
+  await expect(page.getByRole("button", { name: "Página anterior", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Usar tema escuro", exact: true }).click();
+  await page.screenshot({ path: "test-results/ai-people-dark.png", fullPage: true });
+  await page.getByRole("button", { name: "Próxima página", exact: true }).click();
+  await expect(details).toContainText("Vulnerabilidade sintética 21");
+  await expect(page.getByRole("button", { name: "Próxima página", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Usar tema claro", exact: true }).click();
+  await page.screenshot({ path: "test-results/ai-people-light.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: "test-results/ai-people-mobile.png", fullPage: true });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.getByRole("button", { name: "Ver vulnerabilidades de Autoria não registrada" }).click();
+  await expect(page.getByText("Nenhuma análise salva para esta pessoa neste período.")).toBeVisible();
+  failNext = true;
+  await page.getByRole("button", { name: "Ver vulnerabilidades de Ana Exemplo" }).click();
+  await expect(page.locator("#ai-user-detail").getByRole("alert")).toContainText("Não foi possível consultar");
+  await page.getByRole("button", { name: "Tentar consultar novamente" }).click();
+  await expect(details).toBeVisible();
+  await page.getByLabel("Período do consumo").selectOption("7");
+  await expect(ranking).toBeVisible();
+  await expect(page.locator("#ai-user-detail")).toHaveCount(0);
+  expect(generationRequests).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("visualizador consulta dados mas não gera IA, edita ou acessa a administração", async ({ page }) => {
   await login(page);
   await expect(page).toHaveURL(/\/dashboard$/);
   const viewer = { email: `ai-viewer-${Date.now()}@example.com`, password: "synthetic-viewer-password" };
@@ -80,6 +163,17 @@ test("usuário sem perfil administrador não vê o menu nem acessa o painel da I
     data: { name: "Visualizador sintético", email: viewer.email, temporary_password: viewer.password, role: "visualizador" },
   });
   expect(created.status()).toBe(201);
+  const name = `VIEWER-E2E-${Date.now()}`;
+  const imported = await page.request.post(`${api}/scans/import`, {
+    multipart: { file: { name: "viewer-synthetic.nessus", mimeType: "application/xml", buffer: scan(name, "900003") } },
+  });
+  expect(imported.status()).toBe(202);
+  const importId = (await imported.json()).id;
+  await expect.poll(async () => {
+    return (await (await page.request.get(`${api}/scans/imports/${importId}`)).json()).status;
+  }).toBe("concluido");
+  const findings = await (await page.request.get(`${api}/vulnerabilities?search=${name}`)).json();
+  const findingId = findings.items[0].id;
   await page.getByRole("button", { name: "Sair da plataforma" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await login(page, viewer);
@@ -89,6 +183,23 @@ test("usuário sem perfil administrador não vê o menu nem acessa o painel da I
   expect((await page.request.get(`${api}/admin/ai/summary`)).status()).toBe(403);
   await page.goto("/admin/ai");
   await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto(`/vulnerabilities/${findingId}`);
+  await expect(page.getByRole("heading", { name: `Achado sintético ${name}`, exact: true })).toBeVisible();
+  await expect(page.getByText(/Seu perfil permite apenas consultar análises salvas/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /GERAR ANÁLISE|GERAR NOVA VERSÃO|Salvar acompanhamento/ })).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "ETAPA", exact: true })).toBeDisabled();
+  await expect(page.getByRole("combobox", { name: "RESPONSÁVEL", exact: true })).toBeDisabled();
+  await expect(page.getByLabel("PRAZO", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("textbox", { name: "OBSERVAÇÃO", exact: true })).toBeDisabled();
+  for (const suffix of ["remediation", "remediation/regenerate", "ticket"]) {
+    expect((await page.request.post(`${api}/vulnerabilities/${findingId}/${suffix}`)).status()).toBe(403);
+  }
+  expect((await page.request.patch(`${api}/vulnerabilities/${findingId}/workflow`, { data: { status: "triage" } })).status()).toBe(403);
+  await page.goto("/scan");
+  await expect(page.getByRole("button", { name: "Importar scan", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Excluir scan/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Sair da plataforma" }).click();
+  await expect(page).toHaveURL(/\/login$/);
 });
 
 test.beforeAll(async ({ request }) => {

@@ -146,7 +146,8 @@ provedor, mesmo sem produzir uma análise salva no histórico local.
 ### Painel administrativo local
 
 Administradores podem abrir **Administração da IA** (`/admin/ai`). A página consulta apenas
-`GET /api/v1/admin/ai/summary?days=30`, com períodos permitidos de 7, 30 ou 90 dias corridos.
+`GET /api/v1/admin/ai/summary?days=30` e o detalhamento de consumo por pessoa, com períodos
+permitidos de 7, 30 ou 90 dias corridos.
 Não testa a chave, não consulta saldo/fatura, não gera conteúdo e não altera configurações.
 A API exige autenticação e papel administrador; métricas e eventos são filtrados pelo cliente
 da sessão e a resposta usa `Cache-Control: private, no-store`.
@@ -173,6 +174,33 @@ com esta versão: não reconstrói logs antigos nem garante captura de interrup�
 do processo ou de falhas de gravação no banco. Ausência de registros não prova saúde do provedor.
 O monitor não mede cache hits, não calcula economia, não concilia cobranças e não impõe orçamento.
 Uso externo à instalação e tentativas com custo desconhecido podem constar na fatura oficial.
+
+### Consumo por pessoa
+
+O painel ordena as pessoas pelo custo estimado das análises salvas, do maior para o menor,
+com desempate por tokens e nome. Exibe gerações, vulnerabilidades distintas, tokens de entrada
+e saída e custo histórico em USD. O autor é `vulnerabilidade_analise_ia.criado_por`: quem
+solicitou a geração. Trocar o responsável pelo plano operacional não transfere esse consumo.
+Consultar uma resposta já salva não adiciona uma geração ou consumo a quem a consultou.
+Todas as versões salvas são contabilizadas, inclusive as substituídas.
+
+**Ver vulnerabilidades** consulta
+`GET /api/v1/admin/ai/users/{user_id}/vulnerabilities?days=30&page=1&as_of=...`.
+A API retorna 20 vulnerabilidades por página, agregadas pela identidade estável de tratamento
+(cliente, ativo, plugin, protocolo e porta), com quantidade de gerações, tokens e custo.
+O instante `as_of` vem do resumo e mantém o mesmo recorte temporal durante a paginação.
+O link abre a observação disponível mais recente; excluir um scan não elimina o custo das
+análises preservadas no tratamento. Sem observação disponível, o histórico aparece sem link.
+
+Contas inativas continuam no ranking. Registros sem autor ficam em **Autoria não registrada**
+(`user_id=unattributed` na rota); não se tenta adivinhar quem gerou. Quando não há vínculo do
+autor com o cliente atual, seu nome não é exposto. Ambas as rotas exigem administrador,
+filtram pelo cliente da sessão e não retornam e-mail, chave, prompt ou resposta bruta.
+
+Falhas com custo desconhecido e bloqueios sem chamada externa aparecem separadamente por
+pessoa, inclusive quando ela não tem análises salvas. Tokens/custo dessas falhas não são
+inventados nem somados como zero confirmado. A lista de vulnerabilidades detalha somente
+gerações salvas. Não há limite de gastos por usuário nem conciliação com a fatura nesta entrega.
 
 ### Configuração de um clone
 

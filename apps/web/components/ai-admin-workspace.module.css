@@ -26,5 +26,17 @@
 .failures p { margin: 8px 0; color: var(--text-soft); }
 .failures small, .failures span { color: var(--text-dim); }
 .workspace button:focus-visible, .workspace select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.tableScroll a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; }
+.tableScroll a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.tableScroll td:first-child { min-width: 200px; overflow-wrap: anywhere; }
+.selectedRow { background: var(--brand-soft); }
+.tableScroll small.unknownCost { color: var(--text-soft); }
+.detailButton { border: 1px solid var(--border-bright); color: var(--text-strong); background: var(--surface-soft-panel); border-radius: 6px; padding: 9px 12px; font: inherit; cursor: pointer; }
+.detailButton:hover:not(:disabled) { background: var(--brand-soft); }
+.detailButton:disabled { opacity: .5; cursor: not-allowed; }
+.userDetail { border-top: 1px solid var(--border); margin-top: 24px; padding-top: 20px; min-width: 0; }
+.userDetail h3 { margin: 0; font-size: 16px; color: var(--text-strong); }
+.pagination, .pagination > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pagination { justify-content: space-between; margin-top: 18px; color: var(--text-soft); }
 @media (max-width: 1200px) { .config, .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .config, .metrics { grid-template-columns: 1fr; } .panel { padding: 16px; } .toolbar { align-items: stretch; flex-direction: column; } }

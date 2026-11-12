@@ -49,6 +49,8 @@ openssl rand -hex 32
 8. Abra **Relatórios** para acompanhar entradas, correções, reaberturas e backlog por mês.
 9. Se o Jira estiver configurado, crie e abra o ticket diretamente no detalhe do achado.
 10. Como administrador, abra **Acessos** para cadastrar a equipe e definir os perfis.
+11. Em **Administração da IA**, acompanhe consumo por pessoa e use **Ver vulnerabilidades**
+    para detalhar gerações, tokens e custo estimado no período. Consultar o painel não gasta IA.
 
 Cada achado recebe um **WVM Score** transparente, pode ser aberto em uma visão técnica
 detalhada e os scans do mesmo escopo podem ser comparados para identificar achados novos,
@@ -77,10 +79,11 @@ corrigidas e reabertas, reconstruir o backlog no fechamento de cada mês e deixa
 os meses sem scan. O período pode ser filtrado por severidade, exportado em CSV ou impresso
 como PDF pelo navegador.
 
-Na página do achado, o usuário pode gerar uma explicação simples de **por que aquilo importa**
+Na página do achado, um analista ou administrador pode gerar uma explicação simples de **por que aquilo importa**
 e um plano de correção passo a passo. A primeira resposta é persistida no PostgreSQL e volta a
 ser exibida sem nova chamada ou gasto de tokens. Somente administradores podem solicitar uma
 nova versão; a anterior permanece no histórico e uma falha nunca apaga a resposta válida.
+Visualizadores podem consultar as respostas salvas, mas não gerar IA nem alterar dados.
 
 Os provedores Anthropic e OpenAI já são intercambiáveis. Para usar o Claude Haiku 4.5, defina
 `AI_PROVIDER=anthropic` e preencha somente `ANTHROPIC_API_KEY` no `.env`. Para trocar depois,

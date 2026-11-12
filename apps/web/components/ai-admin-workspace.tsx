@@ -4,16 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PageTitle } from "@/components/page-title";
+import { AIUserUsagePanel, type AIUserUsageData } from "@/components/ai-user-usage";
 import { browserApi } from "@/lib/api";
+import { type AIUsage as Usage, formatAICost as usd, formatAIDate as date, formatAITokens as number } from "@/lib/ai-usage";
 
 import styles from "./ai-admin-workspace.module.css";
-
-interface Usage {
-  analyses: number;
-  input_tokens: number;
-  output_tokens: number;
-  estimated_cost_usd: number;
-}
 
 interface Summary {
   configuration: {
@@ -37,6 +32,7 @@ interface Summary {
   failures_unknown_cost: number;
   configuration_blocks: number;
   models: (Usage & { provider: string; model: string })[];
+  users: AIUserUsageData[];
   recent_failures: {
     id: number;
     occurred_at: string;
@@ -49,13 +45,6 @@ interface Summary {
 
 const providers: Record<string, string> = { anthropic: "Anthropic / Claude", openai: "OpenAI", disabled: "Desativada" };
 const states = { configured: "Configurada · conexão não testada", missing_key: "Configuração incompleta", disabled: "IA desativada" };
-const number = (value: number) => value.toLocaleString("pt-BR");
-const usd = (value: number) => new Intl.NumberFormat("pt-BR", {
-  style: "currency", currency: "USD", minimumFractionDigits: 6, maximumFractionDigits: 8,
-}).format(value);
-const date = (value: string | null) => value ? new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo",
-}).format(new Date(value)) : "Nenhuma análise salva";
 
 export function AIAdminWorkspace() {
   const router = useRouter();
@@ -147,6 +136,9 @@ export function AIAdminWorkspace() {
         <p className={styles.notice}>O valor acima não inclui tentativas com custo desconhecido nem uso fora desta instalação.
           Confira a cobrança oficial no provedor. Respostas salvas são reutilizadas sem nova geração;
           não medimos acessos ao cache nem estimamos uma economia fictícia.</p>
+
+        <AIUserUsagePanel key={`${data.days}:${data.as_of}`} users={data.users}
+          days={data.days} asOf={data.as_of} />
 
         <section className={styles.panel} aria-labelledby="ai-models-title">
           <h2 id="ai-models-title">Consumo por modelo</h2>

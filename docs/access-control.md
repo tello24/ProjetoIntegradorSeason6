@@ -17,13 +17,23 @@ depender de um novo login.
 | Excluir scans concluídos ou com falha | Sim | Não | Não | Não |
 | Solicitar a primeira análise da IA | Sim | Não | Sim | Não |
 | Gerar nova versão de uma análise da IA | Sim | Não | Não | Não |
-| Consultar configuração, consumo e falhas da IA | Sim | Não | Não | Não |
+| Consultar respostas da IA já salvas e seu histórico | Sim | Sim | Sim | Sim |
+| Consultar configuração, consumo por pessoa/vulnerabilidade e falhas da IA | Sim | Não | Não | Não |
 | Criar ticket de vulnerabilidade | Sim | Sim | Sim | Não |
 | Cadastrar, desativar ou alterar perfis | Sim | Não | Não | Não |
 
 ## Proteções aplicadas
 
 - As permissões são conferidas pela API, não apenas pelos botões da interface.
+- O Visualizador é somente leitura. A dependência central de autenticação recusa métodos
+  diferentes de GET/HEAD/OPTIONS para esse perfil, além das permissões específicas de cada
+  rota. Gerar/tentar novamente/regenerar IA, importar/excluir scans, alterar planos, editar
+  ativos, criar tickets e administrar acessos retornam 403, mesmo por requisição direta.
+  A função é lida do banco: um token antigo de administrador não contorna um rebaixamento.
+- Login/logout continuam disponíveis, pois gerenciam apenas a sessão. Filtros, navegação,
+  consulta de relatórios e aparência local permanecem disponíveis ao Visualizador; não
+  alteram dados operacionais nem geram IA. Na interface, ações de escrita ficam ocultas
+  ou desabilitadas e as análises existentes permanecem legíveis.
 - Usuários desativados deixam de autenticar e sessões existentes deixam de ser aceitas.
 - Um administrador não pode rebaixar nem desativar o próprio acesso.
 - O ambiente não pode ficar sem pelo menos um administrador ativo.

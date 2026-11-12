@@ -140,7 +140,7 @@ export function RemediationPlan({
             </button>
           ) : (
             <small className="ai-remediation__readonly">
-              Solicite a geração a um analista ou administrador.
+              Seu perfil permite apenas consultar análises salvas. Solicite a geração a um analista ou administrador.
             </small>
           )}
         </div>
@@ -194,7 +194,7 @@ export function RemediationPlan({
                 {loading ? "GERANDO..." : "TENTAR GERAR ANÁLISE"}
               </button>
             )}
-            {plan.source !== "scanner_template" && plan.can_regenerate && (
+            {plan.source !== "scanner_template" && plan.can_regenerate && canGenerate && (
               <button
                 className="button button--secondary"
                 disabled={loading}

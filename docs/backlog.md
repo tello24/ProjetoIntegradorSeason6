@@ -46,6 +46,16 @@ O trabalho visual dessa branch é preservado; não se aplica automaticamente ao 
 - Não consulta saldo nem validade da chave, não chama provedores e não altera o `.env`.
 - Limite de orçamento, bloqueio automático de gastos e conciliação com faturas não incluídos.
 
+### Consumo de IA por conta e Visualizador somente leitura — implementado
+
+- Ranking administrativo por custo estimado, nome, gerações, vulnerabilidades e tokens de entrada/saída.
+- Detalhamento por vulnerabilidade em páginas de 20 itens, no mesmo período de 7/30/90 dias.
+- Atribuição a quem pediu a geração, não ao responsável atual; histórico de versões preservado.
+- Falhas com custo desconhecido, contas inativas e registros sem autoria tratados explicitamente.
+- Consulta sem chamadas à IA e isolamento por cliente nas rotas de resumo/detalhamento.
+- Bloqueio central de escrita para Visualizador; leitura de análises/histórico mantida.
+- Testes de agregação com PostgreSQL isolado, autorização e navegação com dados fictícios.
+
 ### Dependências — revisão realizada em 09/11/2026
 
 - Next.js e configuração do ESLint atualizados para 16.4.5, com lockfile atualizado.

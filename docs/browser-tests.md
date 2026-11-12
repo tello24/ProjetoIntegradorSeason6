@@ -48,7 +48,13 @@ sintéticos. Esses comandos não param a instalação normal nas portas 3000/800
    confirmar remove o scan e a ausência persiste após atualizar a página.
 9. Painel administrativo da IA: consulta/filtro/atualização sem gerar análises, temas claro e
    escuro, largura de celular, falha da API e recuperação da consulta.
-10. Visualizador não vê o menu administrativo, recebe 403 na API e é redirecionado da página.
+10. Visualizador não vê o menu administrativo, recebe 403 na API e é redirecionado da página;
+    consulta um achado, mas não pode gerar/regenerar IA, editar acompanhamento, criar ticket
+    ou importar/excluir scans. Logout permanece funcional.
+11. Consumo por pessoa: ranking, tokens/custos, vulnerabilidades, paginação, histórico sem
+    link após exclusão de observação, troca de período e recuperação de erro. Este cenário
+    usa respostas HTTP sintéticas para o painel; consultas SQL e isolamento são testados
+    separadamente com PostgreSQL real. Temas claro/escuro e largura de celular são verificados.
 
 O fluxo de remediação também confere o aviso de IA desativada e a tentativa manual:
 cancelar a confirmação não envia requisição; confirmar envia uma única solicitação.
