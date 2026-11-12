@@ -69,7 +69,7 @@ async def get_current_user(
     if row is None:
         raise _unauthorized()
 
-    return CurrentUser(
+    current_user = CurrentUser(
         id=row["id"],
         name=row["nome"],
         email=row["email"],
@@ -77,6 +77,13 @@ async def get_current_user(
         client_name=row["cliente_nome"],
         role=cast(UserRole, row["papel"]),
     )
+    # Fail closed for new protected write routes too; login/logout manage only the session.
+    if current_user.role == "visualizador" and request.method not in {"GET", "HEAD", "OPTIONS"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="O perfil Visualizador é somente leitura e não pode alterar dados nem gerar IA.",
+        )
+    return current_user
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]

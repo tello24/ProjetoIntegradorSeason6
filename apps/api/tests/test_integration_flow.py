@@ -10,6 +10,7 @@ from app.api.dependencies import CurrentUser, get_current_user
 from app.api.routes import vulnerabilities as vulnerability_routes
 from app.core.config import settings
 from app.core.database import session_factory
+from app.core.security import create_session_token
 from app.main import app
 from app.services import scan_deletion
 from app.services.remediation import RemediationPlan
@@ -497,6 +498,21 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         )
         assert visualizer_ticket.status_code == 200
         assert visualizer_ticket.json()["can_create"] is False
+        for path in ["remediation", "remediation/regenerate", "ticket"]:
+            denied = client.post(f"/api/v1/vulnerabilities/{finding_id}/{path}")
+            assert denied.status_code == 403
+            assert "somente leitura" in denied.json()["detail"]
+        assert client.post(
+            "/api/v1/scans/import",
+            files={"file": ("not-allowed.nessus", SAMPLE_NESSUS, "application/xml")},
+        ).status_code == 403
+        assert client.post("/api/v1/access/users", json={
+            "name": "Not allowed", "email": "blocked@example.com",
+            "temporary_password": role_password, "role": "analista",
+        }).status_code == 403
+        assert client.patch(
+            f"/api/v1/access/users/{visualizer_id}", json={"role": "administrador"},
+        ).status_code == 403
 
         restored_admin = client.post(
             "/api/v1/auth/login",
@@ -637,6 +653,32 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
             "estimated_cost_usd": 0.0056,
         }
         assert ai_admin.json()["models"][0]["analyses"] == 2
+        assert ai_admin.json()["users"][0]["user_id"] == user_id
+        assert ai_admin.json()["users"][0]["analyses"] == 2
+        assert ai_admin.json()["users"][0]["vulnerabilities"] == 1
+        person_detail = client.get(f"/api/v1/admin/ai/users/{user_id}/vulnerabilities")
+        assert person_detail.status_code == 200
+        assert person_detail.json()["items"][0]["finding_id"] == finding_id
+        assert person_detail.json()["items"][0]["estimated_cost_usd"] == 0.0056
+        # Viewing an existing plan is allowed and never makes a provider request.
+        viewer_token = create_session_token(
+            user_id=UUID(visualizer_id), client_id=login.json()["user"]["client_id"],
+            role="administrador",  # Stale/elevated claim must not override the stored role.
+        )
+        viewer_headers = {"Cookie": f"ng_session={viewer_token}"}
+        viewer_plan = client.get(
+            f"/api/v1/vulnerabilities/{finding_id}/remediation", headers=viewer_headers,
+        )
+        assert viewer_plan.status_code == 200
+        assert viewer_plan.json()["version"] == 2
+        assert viewer_plan.json()["can_regenerate"] is False
+        assert client.get(
+            f"/api/v1/vulnerabilities/{finding_id}/remediation/history", headers=viewer_headers,
+        ).status_code == 200
+        for suffix in ["remediation", "remediation/regenerate"]:
+            assert client.post(
+                f"/api/v1/vulnerabilities/{finding_id}/{suffix}", headers=viewer_headers,
+            ).status_code == 403
         assert client.get("/api/v1/admin/ai/summary?days=500").status_code == 422
         assert client.get("/api/v1/admin/ai/summary?days=7").status_code == 200
         assert ai_calls == 2  # The monitor does not call or regenerate anything.
@@ -698,6 +740,9 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
             app.dependency_overrides[get_current_user] = lambda u=restricted: u
             try:
                 assert client.get("/api/v1/admin/ai/summary").status_code == 403
+                assert client.get(
+                    f"/api/v1/admin/ai/users/{user_id}/vulnerabilities",
+                ).status_code == 403
             finally:
                 app.dependency_overrides.pop(get_current_user, None)
         foreign = CurrentUser(UUID(user_id), "Foreign", "foreign@example.com", 999999,
@@ -707,6 +752,7 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
             foreign_panel = client.get("/api/v1/admin/ai/summary").json()
             assert foreign_panel["usage"]["analyses"] == 0
             assert foreign_panel["models"] == []
+            assert foreign_panel["users"] == []
             assert foreign_panel["recent_failures"] == []
             assert foreign_panel["failures"] == 0
             assert foreign_panel["last_success_at"] is None

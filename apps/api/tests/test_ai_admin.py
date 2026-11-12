@@ -1,5 +1,5 @@
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -8,7 +8,11 @@ import pytest
 from fastapi import HTTPException, Response
 
 from app.api.dependencies import CurrentUser
-from app.api.routes.ai_admin import configuration_snapshot, get_ai_summary
+from app.api.routes.ai_admin import (
+    configuration_snapshot,
+    get_ai_summary,
+    get_user_ai_vulnerabilities,
+)
 from app.core.config import Settings
 from app.services.ai_monitoring import record_ai_failure
 
@@ -42,6 +46,10 @@ async def test_admin_panel_checks_role_before_reading_data(role):
         await get_ai_summary(user, session, Response())
     assert exc.value.status_code == 403
     session.execute.assert_not_called()
+    with pytest.raises(HTTPException) as exc:
+        await get_user_ai_vulnerabilities(uuid4(), user, session, Response(), page=1)
+    assert exc.value.status_code == 403
+    session.execute.assert_not_called()
 
 
 def result(row=None, rows=None):
@@ -63,6 +71,8 @@ async def test_summary_scopes_every_query_to_tenant_and_bounds_dates(days):
         result(rows=[{**usage, "provider": "anthropic", "model": "test-model"}]),
         result(rows=[dict(id=11, criado_em=now, provider="raw-private-text",
                          error_code="raw-private-text", cost_status=None)]),
+        result(rows=[dict(**usage, user_id=None, name="Autoria não registrada", active=False,
+                         vulnerabilities=1, failures_unknown_cost=1, configuration_blocks=1)]),
     ]
     user = CurrentUser(uuid4(), "Test", "test@example.com", 12, "Test", "administrador")
     response = Response()
@@ -71,6 +81,9 @@ async def test_summary_scopes_every_query_to_tenant_and_bounds_dates(days):
     assert summary.usage.analyses == 2
     assert summary.failures_unknown_cost == 1
     assert summary.configuration_blocks == 1
+    assert summary.users[0].analyses == 2
+    assert summary.users[0].vulnerabilities == 1
+    assert summary.users[0].user_id is None
     assert (summary.as_of - summary.period_start).days == int(days)
     assert response.headers["Cache-Control"] == "private, no-store"
     assert summary.recent_failures[0].error_code == "invalid_response"
@@ -84,6 +97,43 @@ async def test_summary_scopes_every_query_to_tenant_and_bounds_dates(days):
         assert params["as_of"] == summary.as_of
         assert "ativa = true" not in str(query)  # Count superseded paid versions too.
     session.commit.assert_not_called()
+
+
+@pytest.mark.parametrize("unattributed", [False, True])
+async def test_user_details_scope_author_tenant_period_and_page(unattributed):
+    author = "unattributed" if unattributed else uuid4()
+    user = CurrentUser(uuid4(), "Admin", "admin@example.com", 12, "Test", "administrador")
+    session = AsyncMock()
+    session.execute.side_effect = [result(row={"total": 21}), result(rows=[])]
+    response = Response()
+    end = datetime.now(UTC) - timedelta(seconds=1)
+    detail = await get_user_ai_vulnerabilities(
+        author, user, session, response, days="7", page=2, as_of=end,
+    )
+    assert detail.total == 21 and detail.page_size == 20
+    assert detail.user_id == (None if unattributed else author)
+    assert response.headers["Cache-Control"] == "private, no-store"
+    for call in session.execute.call_args_list:
+        query, params = call.args
+        assert "cliente_id = :client_id" in str(query)
+        assert "criado_por IS NOT DISTINCT FROM CAST(:user_id AS uuid)" in str(query)
+        assert "ativa = true" not in str(query)
+        assert params == {"client_id": 12, "user_id": detail.user_id,
+                          "since": end - timedelta(days=7), "as_of": end,
+                          "limit": 20, "offset": 20}
+    session.commit.assert_not_called()
+
+
+async def test_future_usage_snapshot_is_rejected_before_query():
+    user = CurrentUser(uuid4(), "Admin", "admin@example.com", 12, "Test", "administrador")
+    session = AsyncMock()
+    with pytest.raises(HTTPException) as exc:
+        await get_user_ai_vulnerabilities(
+            user.id, user, session, Response(), page=1,
+            as_of=datetime.now(UTC) + timedelta(days=1),
+        )
+    assert exc.value.status_code == 422
+    session.execute.assert_not_called()
 
 
 @pytest.mark.parametrize("code,expected", [
