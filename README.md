@@ -1,4 +1,4 @@
-# WVM — Wolf Vulnerability Management
+# WVM — Wolf Vulnerability Management.
 
 Aplicação interna em desenvolvimento.
 
