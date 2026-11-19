@@ -111,6 +111,8 @@ O upload usa um registro de adaptadores: hoje o Nessus está ativo e novos scann
 adicionados sem reescrever o fluxo de importação. Consulte
 [`docs/scanner-adapters.md`](docs/scanner-adapters.md). A configuração segura e o ciclo do
 conector Jira estão em [`docs/ticketing.md`](docs/ticketing.md).
+Troca obrigatória da senha inicial e recuperação por e-mail (desativada até configurar SMTP)
+estão em [`docs/passwords.md`](docs/passwords.md).
 
 O Docker é a forma oficial de execução para manter o ambiente do hackathon e do projeto acadêmico reproduzível.
 
