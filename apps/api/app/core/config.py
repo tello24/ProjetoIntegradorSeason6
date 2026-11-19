@@ -1,10 +1,10 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import EmailStr, Field, field_validator, model_validator
+from pydantic import EmailStr, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 DEVELOPMENT_SECRET = "development-only-change-me-at-least-32-characters"
@@ -30,12 +30,13 @@ class AIProviderConfig:
 class JiraConfig:
     base_url: str
     email: str
-    api_token: str
+    api_token: str = field(repr=False)
     project_key: str
     issue_type: str
     timeout_seconds: int
     include_asset_details: bool
     app_public_url: str
+    cloud_id: str | None = None
 
 
 class Settings(BaseSettings):
@@ -86,6 +87,16 @@ class Settings(BaseSettings):
     jira_issue_type: str = Field(default="Task", min_length=1, max_length=80)
     jira_timeout_seconds: int = Field(default=20, ge=5, le=60)
     jira_include_asset_details: bool = False
+    # Tenant credentials live encrypted in PostgreSQL, never in these legacy Jira variables.
+    integration_encryption_keys: SecretStr | None = None
+    jira_connections_enabled: bool = True
+    password_email_enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = Field(default=465, ge=1, le=65535)
+    smtp_security: Literal["ssl", "starttls"] = "ssl"
+    smtp_username: str = ""
+    smtp_password: SecretStr | None = None
+    smtp_from: EmailStr | None = None
 
     @field_validator("api_cors_origins", mode="before")
     @classmethod
@@ -105,7 +116,7 @@ class Settings(BaseSettings):
 
         return [origin.strip() for origin in normalized.split(",") if origin.strip()]
 
-    @field_validator("bootstrap_admin_email", mode="before")
+    @field_validator("bootstrap_admin_email", "smtp_from", mode="before")
     @classmethod
     def normalize_optional_email(cls, value: object) -> object:
         if isinstance(value, str):

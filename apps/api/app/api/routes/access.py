@@ -114,8 +114,8 @@ async def create_access_user(
     user_result = await session.execute(
         text(
             """
-            INSERT INTO app.usuario (nome, email, senha_hash)
-            VALUES (:name, :email, :password_hash)
+            INSERT INTO app.usuario (nome, email, senha_hash, trocar_senha)
+            VALUES (:name, :email, :password_hash, true)
             RETURNING id
             """
         ),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { type FormEvent, useState } from "react";
 
 import { browserApi, readApiError } from "@/lib/api";
@@ -31,7 +32,8 @@ export function LoginForm() {
           : await readApiError(response));
         return;
       }
-      router.replace("/dashboard");
+      const result = await response.json();
+      router.replace(result.user.must_change_password ? "/change-password" : "/dashboard");
       router.refresh();
     } catch (loginError) {
       const timedOut = loginError instanceof Error && loginError.name === "TimeoutError";
@@ -74,6 +76,7 @@ export function LoginForm() {
       </button>
 
       {error && <p className="form-error" role="alert">{error}</p>}
+      <Link href="/forgot-password">Esqueci minha senha</Link>
     </form>
   );
 }

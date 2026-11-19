@@ -17,6 +17,7 @@ export function createLocalConfiguration(template) {
   const values = {
     APP_ENV: "development",
     APP_SECRET_KEY: randomBytes(32).toString("hex"),
+    INTEGRATION_ENCRYPTION_KEYS: randomBytes(32).toString("base64").replaceAll("+", "-").replaceAll("/", "_"),
     POSTGRES_PASSWORD: password,
     DATABASE_URL: `postgresql+asyncpg://${example.POSTGRES_USER}:${password}@database:5432/${example.POSTGRES_DB}`,
     BOOTSTRAP_ADMIN_PASSWORD: randomBytes(24).toString("hex"),

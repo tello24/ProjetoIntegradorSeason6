@@ -15,12 +15,12 @@ async def test_viewer_is_readonly_even_with_stale_admin_token(monkeypatch, metho
         "sub": str(user_id), "client_id": 12, "role": "administrador",
     })
     row = dict(id=user_id, nome="Leitor", email="viewer@example.com", cliente_id=12,
-               cliente_nome="Test", papel="visualizador")
+               cliente_nome="Test", papel="visualizador", versao_sessao=0, trocar_senha=False)
     result = MagicMock()
     result.mappings.return_value.one_or_none.return_value = row
     session = AsyncMock()
     session.execute.return_value = result
-    request = Request({"type": "http", "method": method, "headers": [
+    request = Request({"type": "http", "path": "/api/v1/scans", "method": method, "headers": [
         (b"cookie", f"{dependencies.settings.session_cookie_name}=synthetic-session".encode()),
     ]})
     if method in {"GET", "HEAD", "OPTIONS"}:

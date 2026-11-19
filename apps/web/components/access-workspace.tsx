@@ -196,7 +196,7 @@ export function AccessWorkspace() {
               <span>NOVO ACESSO</span>
               <strong>Cadastre a credencial inicial</strong>
             </div>
-            <small>O usuário poderá entrar imediatamente com os dados informados.</small>
+            <small>No primeiro acesso, o usuário deverá trocar a senha inicial antes de usar a plataforma.</small>
           </div>
           <div className={styles.formGrid}>
             <AccessField label="Nome">

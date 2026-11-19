@@ -24,6 +24,7 @@ class UserResponse(BaseModel):
     client_id: int
     client_name: str
     role: UserRole
+    must_change_password: bool = False
 
 
 class LoginResponse(BaseModel):
@@ -44,6 +45,7 @@ async def login(
                 u.nome,
                 u.email,
                 u.senha_hash,
+                u.trocar_senha, u.versao_sessao,
                 uc.cliente_id,
                 c.nome AS cliente_nome,
                 uc.papel
@@ -81,6 +83,7 @@ async def login(
         user_id=row["id"],
         client_id=row["cliente_id"],
         role=row["papel"],
+        version=row["versao_sessao"],
     )
     response.set_cookie(
         key=settings.session_cookie_name,
@@ -100,6 +103,7 @@ async def login(
             client_id=row["cliente_id"],
             client_name=row["cliente_nome"],
             role=row["papel"],
+            must_change_password=row["trocar_senha"],
         )
     )
 
@@ -126,4 +130,5 @@ async def me(current_user: CurrentUserDep) -> UserResponse:
         client_id=current_user.client_id,
         client_name=current_user.client_name,
         role=current_user.role,
+        must_change_password=current_user.must_change_password,
     )

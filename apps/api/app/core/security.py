@@ -26,13 +26,14 @@ def verify_password(password: str, encoded_hash: str) -> bool:
     return password_hash.verify(password, encoded_hash)
 
 
-def create_session_token(*, user_id: UUID, client_id: int, role: str) -> str:
+def create_session_token(*, user_id: UUID, client_id: int, role: str, version: int = 0) -> str:
     now = datetime.now(UTC)
     expires_at = now + timedelta(hours=settings.session_duration_hours)
     payload: dict[str, Any] = {
         "sub": str(user_id),
         "client_id": client_id,
         "role": role,
+        "version": version,
         "iss": ISSUER,
         "iat": now,
         "exp": expires_at,

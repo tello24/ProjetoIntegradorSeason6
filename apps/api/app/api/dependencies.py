@@ -11,9 +11,7 @@ from app.core.database import get_session
 from app.core.security import SessionTokenError, decode_session_token
 
 UserRole = Literal["administrador", "gestor", "analista", "visualizador"]
-OPERATIONAL_ROLES: frozenset[UserRole] = frozenset(
-    {"administrador", "gestor", "analista"}
-)
+OPERATIONAL_ROLES: frozenset[UserRole] = frozenset({"administrador", "gestor", "analista"})
 SCAN_IMPORT_ROLES: frozenset[UserRole] = frozenset({"administrador", "analista"})
 AI_GENERATION_ROLES: frozenset[UserRole] = frozenset({"administrador", "analista"})
 
@@ -26,6 +24,8 @@ class CurrentUser:
     client_id: int
     client_name: str
     role: UserRole
+    must_change_password: bool = False
+    session_version: int = 0
 
 
 async def get_current_user(
@@ -50,6 +50,7 @@ async def get_current_user(
                 u.id,
                 u.nome,
                 u.email,
+                u.trocar_senha, u.versao_sessao,
                 uc.cliente_id,
                 c.nome AS cliente_nome,
                 uc.papel
@@ -68,6 +69,11 @@ async def get_current_user(
     row = result.mappings().one_or_none()
     if row is None:
         raise _unauthorized()
+    if payload.get("version", 0) != row["versao_sessao"]:
+        raise _unauthorized()
+    own_password = request.url.path == "/api/v1/auth/change-password"
+    if row["trocar_senha"] and request.url.path != "/api/v1/auth/me" and not own_password:
+        raise HTTPException(428, "Troque sua senha inicial antes de acessar a plataforma.")
 
     current_user = CurrentUser(
         id=row["id"],
@@ -76,9 +82,15 @@ async def get_current_user(
         client_id=row["cliente_id"],
         client_name=row["cliente_nome"],
         role=cast(UserRole, row["papel"]),
+        must_change_password=row["trocar_senha"],
+        session_version=row["versao_sessao"],
     )
     # Fail closed for new protected write routes too; login/logout manage only the session.
-    if current_user.role == "visualizador" and request.method not in {"GET", "HEAD", "OPTIONS"}:
+    if (
+        current_user.role == "visualizador"
+        and not own_password
+        and request.method not in {"GET", "HEAD", "OPTIONS"}
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="O perfil Visualizador é somente leitura e não pode alterar dados nem gerar IA.",

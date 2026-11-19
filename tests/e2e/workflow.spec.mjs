@@ -177,6 +177,15 @@ test("visualizador consulta dados mas não gera IA, edita ou acessa a administra
   await page.getByRole("button", { name: "Sair da plataforma" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await login(page, viewer);
+  await expect(page).toHaveURL(/\/change-password$/);
+  expect((await page.request.get(`${api}/dashboard/summary`)).status()).toBe(428);
+  await page.getByLabel("Senha atual ou inicial").fill(viewer.password);
+  await page.getByLabel("Nova senha", { exact: true }).fill(viewer.password + "-personal");
+  await page.getByLabel("Confirmar nova senha").fill(viewer.password + "-personal");
+  await page.getByRole("button", { name: "Salvar nova senha" }).click();
+  await expect(page.getByRole("status")).toContainText("Senha alterada");
+  viewer.password += "-personal";
+  await login(page, viewer);
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByText("Visualizador", { exact: true })).toBeVisible();
   await expect(page.getByRole("navigation").getByRole("link", { name: "Administração da IA", exact: true })).toHaveCount(0);

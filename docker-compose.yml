@@ -38,7 +38,13 @@ services:
         -f /migrations/008_asset_intelligence.sql &&
         psql -h database -U ${POSTGRES_USER:-neoguardian}
         -d ${POSTGRES_DB:-neoguardian} -v ON_ERROR_STOP=1
-        -f /migrations/009_asset_business_context.sql
+        -f /migrations/009_asset_business_context.sql &&
+        psql -h database -U ${POSTGRES_USER:-neoguardian}
+        -d ${POSTGRES_DB:-neoguardian} -v ON_ERROR_STOP=1
+        -f /migrations/010_jira_tenants.sql &&
+        psql -h database -U ${POSTGRES_USER:-neoguardian}
+        -d ${POSTGRES_DB:-neoguardian} -v ON_ERROR_STOP=1
+        -f /migrations/011_password_recovery.sql
     depends_on:
       database:
         condition: service_healthy

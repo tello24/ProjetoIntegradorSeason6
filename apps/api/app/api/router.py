@@ -7,6 +7,8 @@ from app.api.routes import (
     auth,
     dashboard,
     health,
+    jira_admin,
+    passwords,
     reports,
     scans,
     tickets,
@@ -14,8 +16,11 @@ from app.api.routes import (
 )
 
 api_router = APIRouter()
+
 api_router.include_router(health.router)
+api_router.include_router(jira_admin.router, prefix="/admin/jira", tags=["Jira administration"])
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
+api_router.include_router(passwords.router, prefix="/auth", tags=["passwords"])
 api_router.include_router(access.router, prefix="/access", tags=["access"])
 api_router.include_router(ai_admin.router, prefix="/admin/ai", tags=["ai administration"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])

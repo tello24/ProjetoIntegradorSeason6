@@ -28,6 +28,7 @@ interface SessionUser {
   client_id: number;
   client_name: string;
   role: UserRole;
+  must_change_password: boolean;
 }
 
 const roleLabels: Record<UserRole, string> = {
@@ -57,7 +58,11 @@ export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
           router.replace("/login");
           return;
         }
-        if (response.ok) setUser((await response.json()) as SessionUser);
+        if (response.ok) {
+          const session = await response.json() as SessionUser;
+          if (session.must_change_password) { router.replace("/change-password"); return; }
+          setUser(session);
+        }
       } catch (sessionError) {
         if (!(sessionError instanceof DOMException && sessionError.name === "AbortError")) {
           setUser(null);
@@ -105,6 +110,7 @@ export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
               ? [
                   { label: "Acessos", href: "/access", icon: "users" as IconName },
                   { label: "Administração da IA", href: "/admin/ai", icon: "brain" as IconName },
+                  { label: "Integração Jira", href: "/admin/jira", icon: "report" as IconName },
                 ]
               : []),
           ].map((item) => {
@@ -136,6 +142,7 @@ export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
           <div className="sidebar__user">
             <strong>{user?.name ?? "Carregando perfil"}</strong>
             <span>{user ? roleLabels[user.role] : "Ambiente seguro"}</span>
+            <Link href="/change-password">Alterar senha</Link>
           </div>
           <button
             aria-label="Sair da plataforma"

@@ -25,6 +25,7 @@ export async function serverApi<T>(path: string): Promise<T> {
   if (response.status === 401) {
     redirect("/login");
   }
+  if (response.status === 428) redirect("/change-password");
   if (!response.ok) {
     throw new Error(`API respondeu com status ${response.status}.`);
   }

@@ -34,6 +34,8 @@ services:
       SESSION_COOKIE_NAME: ng_session
       AI_PROVIDER: disabled
       TICKET_PROVIDER: disabled
+      JIRA_CONNECTIONS_ENABLED: "false"
+      INTEGRATION_ENCRYPTION_KEYS: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
     ports:
       - "127.0.0.1:8001:8000"
     depends_on:

@@ -1,7 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -35,3 +38,24 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+
+@app.exception_handler(RequestValidationError)
+async def safe_validation_error(request: Request, exc: RequestValidationError):
+    # Pydantic's default error includes input values; never echo a credential form.
+    if request.url.path.startswith("/api/v1/auth"):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Confira os campos. A nova senha precisa ter entre 12 e 200 caracteres."
+            },
+        )
+    if request.url.path.startswith("/api/v1/admin/jira"):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Confira os campos do Jira: endereço, e-mail, projeto, "
+                "tipo de item e Cloud ID (UUID, se informado)."
+            },
+        )
+    return await request_validation_exception_handler(request, exc)

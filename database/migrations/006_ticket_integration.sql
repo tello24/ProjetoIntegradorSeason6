@@ -23,8 +23,14 @@ CREATE TABLE IF NOT EXISTS app.vulnerabilidade_ticket (
 CREATE INDEX IF NOT EXISTS vulnerabilidade_ticket_cliente_data_idx
     ON app.vulnerabilidade_ticket (cliente_id, criado_em DESC);
 
-CREATE UNIQUE INDEX IF NOT EXISTS vulnerabilidade_ticket_chave_externa_idx
-    ON app.vulnerabilidade_ticket (provedor, chave_externa)
-    WHERE chave_externa IS NOT NULL;
+-- Compose may replay this migration after 010. Do not restore global uniqueness:
+-- different customer sites can legitimately issue the same project key/number.
+DO $$ BEGIN
+    IF to_regclass('app.vulnerabilidade_ticket_cliente_chave_idx') IS NULL THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS vulnerabilidade_ticket_chave_externa_idx
+            ON app.vulnerabilidade_ticket (provedor, chave_externa)
+            WHERE chave_externa IS NOT NULL;
+    END IF;
+END $$;
 
 COMMIT;

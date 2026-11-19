@@ -12,7 +12,7 @@ const example = readFileSync(new URL("../.env.example", import.meta.url), "utf8"
 test("creates unique coherent credentials without enabling paid integrations", () => {
   const first = parseEnv(createLocalConfiguration(example));
   const second = parseEnv(createLocalConfiguration(example));
-  for (const key of ["APP_SECRET_KEY", "POSTGRES_PASSWORD", "BOOTSTRAP_ADMIN_PASSWORD"]) {
+  for (const key of ["APP_SECRET_KEY", "POSTGRES_PASSWORD", "BOOTSTRAP_ADMIN_PASSWORD", "INTEGRATION_ENCRYPTION_KEYS"]) {
     assert.ok(first[key].length >= 32);
     assert.notEqual(first[key], second[key]);
   }

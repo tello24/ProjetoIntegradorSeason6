@@ -30,12 +30,14 @@ async def readiness(
             checks["database"] = "ok"
             # Zero-row queries also verify columns, unlike table-existence checks alone.
             await session.execute(text("""
-                SELECT u.ativo, uc.papel, c.ativo, t.total_reaberturas,
-                       a.geracao, ticket.provedor, sh.metadados, ctx.ambiente
+                SELECT u.ativo, u.trocar_senha, u.versao_sessao, uc.papel, c.ativo,
+                       t.total_reaberturas,
+                       a.geracao, ticket.provedor, ticket.site_url, sh.metadados, ctx.ambiente,
+                       jira.versao
                 FROM app.usuario u, app.usuario_cliente uc, vm.cliente c,
                      app.vulnerabilidade_tratamento t, app.vulnerabilidade_analise_ia a,
                      app.vulnerabilidade_ticket ticket, vm.scan_host sh,
-                     app.ativo_contexto ctx
+                     app.ativo_contexto ctx, app.jira_integracao jira
                 WHERE false
             """))
             checks["schema"] = "ok"

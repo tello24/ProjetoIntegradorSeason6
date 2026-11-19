@@ -82,6 +82,15 @@ THIRD_SAMPLE_NESSUS = SAMPLE_NESSUS.replace(
 )
 
 
+def finish_initial_password(client, email, password):
+    assert client.post("/api/v1/auth/change-password", json={
+        "current_password": password, "new_password": password + "-personal",
+    }).status_code == 200
+    assert client.post("/api/v1/auth/login", json={
+        "email": email, "password": password + "-personal",
+    }).status_code == 200
+
+
 def test_login_import_and_reporting_flow(monkeypatch) -> None:
     with TestClient(app) as client:
         login = client.post(
@@ -422,6 +431,7 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         )
         assert manager_login.status_code == 200
         assert manager_login.json()["user"]["role"] == "gestor"
+        finish_initial_password(client, "gestor@rbac.example.com", role_password)
         assert client.get("/api/v1/access/users").status_code == 403
         manager_scans = client.get("/api/v1/scans")
         assert manager_scans.status_code == 200
@@ -449,6 +459,7 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         )
         assert analyst_login.status_code == 200
         assert analyst_login.json()["user"]["role"] == "analista"
+        finish_initial_password(client, "analista@rbac.example.com", role_password)
         analyst_scans = client.get("/api/v1/scans")
         assert analyst_scans.status_code == 200
         assert analyst_scans.json()["can_import"] is True
@@ -472,6 +483,7 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         )
         assert visualizer_login.status_code == 200
         assert visualizer_login.json()["user"]["role"] == "visualizador"
+        finish_initial_password(client, "visualizador@rbac.example.com", role_password)
         assert client.get("/api/v1/scans").json()["can_delete"] is False
         assert client.delete(f"/api/v1/scans/{import_status.json()['scan_id']}").status_code == 403
         visualizer_queue = client.get("/api/v1/vulnerabilities/queue")
@@ -532,8 +544,8 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
             f"/api/v1/vulnerabilities/{finding_id}/ticket"
         )
         assert ticket_integration.status_code == 200
-        assert ticket_integration.json()["enabled"] is (settings.active_jira is not None)
-        assert ticket_integration.json()["can_create"] is (settings.active_jira is not None)
+        assert ticket_integration.json()["enabled"] is False
+        assert ticket_integration.json()["can_create"] is False
         assert ticket_integration.json()["ticket"] is None
 
         assignees = client.get("/api/v1/vulnerabilities/assignees")
@@ -664,6 +676,7 @@ def test_login_import_and_reporting_flow(monkeypatch) -> None:
         viewer_token = create_session_token(
             user_id=UUID(visualizer_id), client_id=login.json()["user"]["client_id"],
             role="administrador",  # Stale/elevated claim must not override the stored role.
+            version=1,
         )
         viewer_headers = {"Cookie": f"ng_session={viewer_token}"}
         viewer_plan = client.get(

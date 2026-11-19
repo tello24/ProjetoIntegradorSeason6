@@ -1,5 +1,6 @@
 """Provider access is always mocked, even when the developer has a live key in .env."""
 
+import smtplib
 from urllib import request
 
 import pytest
@@ -16,3 +17,5 @@ def block_live_provider_requests(monkeypatch):
     # replace either with a fake response, but never need a real key or balance.
     monkeypatch.setattr(request, "urlopen", blocked)
     monkeypatch.setattr(jira, "urlopen", blocked)
+    monkeypatch.setattr(smtplib, "SMTP", blocked)
+    monkeypatch.setattr(smtplib, "SMTP_SSL", blocked)
